@@ -41,7 +41,9 @@ export default [
         HTMLElement: 'readonly',
         HTMLInputElement: 'readonly',
         Element: 'readonly',
+        Node: 'readonly',
         Event: 'readonly',
+        MouseEvent: 'readonly',
         DragEvent: 'readonly',
         AbortController: 'readonly',
         AbortSignal: 'readonly',
@@ -55,8 +57,15 @@ export default [
         IDBDatabase: 'readonly',
         IDBRequest: 'readonly',
         IDBOpenDBRequest: 'readonly',
+        // Additional DOM types
+        Response: 'readonly',
+        ErrorEvent: 'readonly',
+        PromiseRejectionEvent: 'readonly',
+        CSSStyleDeclaration: 'readonly',
         // Vite global constants
-        __APP_VERSION__: 'readonly'
+        __APP_VERSION__: 'readonly',
+        // Test environment globals (vitest with jsdom)
+        global: 'readonly'
       }
     },
     rules: {

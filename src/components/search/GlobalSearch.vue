@@ -1,7 +1,9 @@
 <template>
   <div class="relative">
     <div class="relative">
-      <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 theme-transition-colors" />
+      <MagnifyingGlassIcon
+        class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 theme-transition-colors"
+      />
       <input
         ref="searchInput"
         v-model="searchQuery"
@@ -12,7 +14,9 @@
         placeholder="Search..."
         class="w-full pl-10 pr-4 py-2 text-sm bg-gray-100 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white dark:bg-gray-800 dark:text-white dark:focus:bg-gray-700 theme-transition-colors"
       />
-      <kbd class="absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-200 border border-gray-300 rounded dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600 theme-transition-colors">
+      <kbd
+        class="absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-200 border border-gray-300 rounded dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600 theme-transition-colors"
+      >
         ⌘K
       </kbd>
     </div>
@@ -38,13 +42,17 @@
         </div>
 
         <div v-else-if="searchQuery && searchResults.length === 0" class="p-4">
-          <div class="text-sm text-gray-500 dark:text-gray-400">No results found for "{{ searchQuery }}"</div>
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            No results found for "{{ searchQuery }}"
+          </div>
         </div>
 
         <div v-else>
           <!-- Recent searches when no query -->
           <div v-if="!searchQuery && recentSearches.length > 0">
-            <div class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+            <div
+              class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600"
+            >
               Recent Searches
             </div>
             <button
@@ -60,11 +68,10 @@
 
           <!-- Search results -->
           <div v-if="searchQuery && searchResults.length > 0">
-            <div
-              v-for="(group, groupName) in groupedResults"
-              :key="groupName"
-            >
-              <div class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600 theme-transition-colors">
+            <div v-for="(group, groupName) in groupedResults" :key="groupName">
+              <div
+                class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600 theme-transition-colors"
+              >
                 {{ groupName }}
               </div>
               <button
@@ -72,7 +79,8 @@
                 :key="`${groupName}-${index}`"
                 @click="selectResult(result)"
                 :class="{
-                  'bg-gray-100 dark:bg-gray-700': index === selectedIndex && currentGroup === groupName
+                  'bg-gray-100 dark:bg-gray-700':
+                    index === selectedIndex && currentGroup === groupName,
                 }"
                 class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 theme-transition-colors"
               >
@@ -95,7 +103,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { MagnifyingGlassIcon, ClockIcon, QueueListIcon, InboxStackIcon, DocumentTextIcon, ArchiveBoxIcon, DocumentIcon, CircleStackIcon } from '@heroicons/vue/24/outline'
+import {
+  MagnifyingGlassIcon,
+  ClockIcon,
+  QueueListIcon,
+  InboxStackIcon,
+  DocumentTextIcon,
+  ArchiveBoxIcon,
+  DocumentIcon,
+  CircleStackIcon,
+} from '@heroicons/vue/24/outline'
 import { topicsApi, subscriptionsApi } from '@/api/pubsub'
 import storageApi from '@/api/storage'
 import firestoreApi from '@/api/firestore'
@@ -103,7 +120,14 @@ import { useMessageTemplatesStore } from '@/stores/messageTemplates'
 import { useTopicsStore } from '@/stores/topics'
 import { useStorageStore } from '@/stores/storage'
 import { useFirestoreStore } from '@/stores/firestore'
-import type { PubSubTopic, PubSubSubscription, MessageTemplate, StorageBucket, StorageObjectWithPreview } from '@/types'
+import { useServiceConnections } from '@/composables/useServiceConnections'
+import type {
+  PubSubTopic,
+  PubSubSubscription,
+  MessageTemplate,
+  StorageBucket,
+  StorageObjectWithPreview,
+} from '@/types'
 import type { FirestoreCollectionWithMetadata } from '@/types/firestore'
 
 interface SearchResult {
@@ -126,6 +150,7 @@ const messageTemplatesStore = useMessageTemplatesStore()
 const topicsStore = useTopicsStore()
 const storageStore = useStorageStore()
 const firestoreStore = useFirestoreStore()
+const { pubsubConnected, storageConnected, firestoreConnected } = useServiceConnections()
 
 const searchInput = ref<HTMLInputElement>()
 const searchQuery = ref('')
@@ -156,7 +181,17 @@ const SEARCH_CONFIG = {
   MAX_COLLECTIONS_TO_SEARCH: 5, // Maximum collections to search for documents
   MAX_DOCUMENTS_PER_COLLECTION: 100, // Maximum documents to fetch per collection
   MAX_SUBCOLLECTION_DEPTH: 3, // Maximum depth to search in subcollections
-  COMMON_BUCKET_PREFIXES: ['tmp', 'temp', 'data', 'files', 'uploads', 'assets', 'logs', 'backup', 'cache']
+  COMMON_BUCKET_PREFIXES: [
+    'tmp',
+    'temp',
+    'data',
+    'files',
+    'uploads',
+    'assets',
+    'logs',
+    'backup',
+    'cache',
+  ],
 } as const
 
 // Get current project ID from route
@@ -175,17 +210,17 @@ const getSubscriptionDisplayName = (fullName: string): string => {
 
 // Cache for loaded data with timestamps
 const dataCache = ref<{
-  topics: { data: PubSubTopic[], timestamp: number } | null
-  subscriptions: { data: PubSubSubscription[], timestamp: number } | null
-  templates: { data: MessageTemplate[], timestamp: number } | null
-  buckets: { data: StorageBucket[], timestamp: number } | null
-  collections: { data: FirestoreCollectionWithMetadata[], timestamp: number } | null
+  topics: { data: PubSubTopic[]; timestamp: number } | null
+  subscriptions: { data: PubSubSubscription[]; timestamp: number } | null
+  templates: { data: MessageTemplate[]; timestamp: number } | null
+  buckets: { data: StorageBucket[]; timestamp: number } | null
+  collections: { data: FirestoreCollectionWithMetadata[]; timestamp: number } | null
 }>({
   topics: null,
   subscriptions: null,
   templates: null,
   buckets: null,
-  collections: null
+  collections: null,
 })
 
 // Helper to check if cache is valid
@@ -198,83 +233,104 @@ const isCacheValid = (cacheEntry: { timestamp: number } | null): boolean => {
 const loadSearchData = async () => {
   if (!currentProjectId.value) return
 
-  // Load topics (PubSub) with caching
-  if (!isCacheValid(dataCache.value.topics)) {
+  // Load topics (PubSub) with caching - skip if not connected
+  if (pubsubConnected.value && !isCacheValid(dataCache.value.topics)) {
     try {
       const topics = await topicsApi.getTopics(currentProjectId.value)
       dataCache.value.topics = { data: topics || [], timestamp: Date.now() }
       allTopics.value = dataCache.value.topics.data
     } catch (error) {
-      console.warn('Failed to load topics:', error)
+      console.debug('Failed to load topics:', error)
       allTopics.value = []
     }
+  } else if (pubsubConnected.value) {
+    allTopics.value = dataCache.value.topics?.data || []
   } else {
-    allTopics.value = dataCache.value.topics.data
+    allTopics.value = []
   }
 
-  // Load subscriptions (PubSub) with caching
-  if (!isCacheValid(dataCache.value.subscriptions)) {
+  // Load subscriptions (PubSub) with caching - skip if not connected
+  if (pubsubConnected.value && !isCacheValid(dataCache.value.subscriptions)) {
     try {
       const subscriptions = await subscriptionsApi.getSubscriptions(currentProjectId.value)
-      dataCache.value.subscriptions = { data: Array.isArray(subscriptions) ? subscriptions : [], timestamp: Date.now() }
+      dataCache.value.subscriptions = {
+        data: Array.isArray(subscriptions) ? subscriptions : [],
+        timestamp: Date.now(),
+      }
       allSubscriptions.value = dataCache.value.subscriptions.data
     } catch (error) {
-      console.warn('Failed to load subscriptions:', error)
+      console.debug('Failed to load subscriptions:', error)
       allSubscriptions.value = []
     }
+  } else if (pubsubConnected.value) {
+    allSubscriptions.value = dataCache.value.subscriptions?.data || []
   } else {
-    allSubscriptions.value = dataCache.value.subscriptions.data
+    allSubscriptions.value = []
   }
 
-  // Load message templates (local storage) with caching
+  // Load message templates (local storage) with caching - always available
   if (!isCacheValid(dataCache.value.templates)) {
     try {
       await messageTemplatesStore.loadTemplates()
-      dataCache.value.templates = { data: messageTemplatesStore.templates || [], timestamp: Date.now() }
+      dataCache.value.templates = {
+        data: messageTemplatesStore.templates || [],
+        timestamp: Date.now(),
+      }
       allTemplates.value = dataCache.value.templates.data
     } catch (error) {
-      console.warn('Failed to load templates:', error)
+      console.debug('Failed to load templates:', error)
       allTemplates.value = []
     }
   } else {
     allTemplates.value = dataCache.value.templates.data
   }
 
-  // Load storage buckets with caching
-  if (!isCacheValid(dataCache.value.buckets)) {
+  // Load storage buckets with caching - skip if not connected
+  if (storageConnected.value && !isCacheValid(dataCache.value.buckets)) {
     try {
       const bucketsResponse = await storageApi.listBuckets({
-        project: currentProjectId.value
+        project: currentProjectId.value,
       })
       dataCache.value.buckets = { data: bucketsResponse.items || [], timestamp: Date.now() }
       allBuckets.value = dataCache.value.buckets.data
     } catch (error) {
-      console.warn('Failed to load storage buckets:', error)
+      console.debug('Failed to load storage buckets:', error)
       allBuckets.value = []
     }
+  } else if (storageConnected.value) {
+    allBuckets.value = dataCache.value.buckets?.data || []
   } else {
-    allBuckets.value = dataCache.value.buckets.data
+    allBuckets.value = []
   }
 
-  // Load Firestore collections with caching
-  if (!isCacheValid(dataCache.value.collections)) {
+  // Load Firestore collections with caching - skip if not connected
+  if (firestoreConnected.value && !isCacheValid(dataCache.value.collections)) {
     try {
       await firestoreStore.loadCollections(currentProjectId.value)
-      dataCache.value.collections = { data: firestoreStore.collections || [], timestamp: Date.now() }
+      dataCache.value.collections = {
+        data: firestoreStore.collections || [],
+        timestamp: Date.now(),
+      }
       allCollections.value = dataCache.value.collections.data
     } catch (error) {
-      console.warn('Failed to load Firestore collections:', error)
+      console.debug('Failed to load Firestore collections:', error)
       allCollections.value = []
     }
+  } else if (firestoreConnected.value) {
+    allCollections.value = dataCache.value.collections?.data || []
   } else {
-    allCollections.value = dataCache.value.collections.data
+    allCollections.value = []
   }
 
   // DON'T load all objects immediately - only load when searching for objects
 }
 
 // Helper to recursively search through document fields
-const searchInDocumentFields = (fields: any, query: string, path: string = ''): { found: boolean; matchedPath: string; matchedValue: string } | null => {
+const searchInDocumentFields = (
+  fields: any,
+  query: string,
+  path: string = ''
+): { found: boolean; matchedPath: string; matchedValue: string } | null => {
   if (!fields) return null
 
   const lowerQuery = query.toLowerCase()
@@ -287,7 +343,7 @@ const searchInDocumentFields = (fields: any, query: string, path: string = ''): 
       return {
         found: true,
         matchedPath: currentPath,
-        matchedValue: `field: ${key}`
+        matchedValue: `field: ${key}`,
       }
     }
 
@@ -299,26 +355,29 @@ const searchInDocumentFields = (fields: any, query: string, path: string = ''): 
           return {
             found: true,
             matchedPath: currentPath,
-            matchedValue: value.stringValue
+            matchedValue: value.stringValue,
           }
         }
       } else if ('integerValue' in value && value.integerValue?.toString().includes(query)) {
         return {
           found: true,
           matchedPath: currentPath,
-          matchedValue: value.integerValue.toString()
+          matchedValue: value.integerValue.toString(),
         }
       } else if ('doubleValue' in value && value.doubleValue?.toString().includes(query)) {
         return {
           found: true,
           matchedPath: currentPath,
-          matchedValue: value.doubleValue.toString()
+          matchedValue: value.doubleValue.toString(),
         }
-      } else if ('booleanValue' in value && value.booleanValue?.toString().toLowerCase().includes(lowerQuery)) {
+      } else if (
+        'booleanValue' in value &&
+        value.booleanValue?.toString().toLowerCase().includes(lowerQuery)
+      ) {
         return {
           found: true,
           matchedPath: currentPath,
-          matchedValue: value.booleanValue.toString()
+          matchedValue: value.booleanValue.toString(),
         }
       } else if ('mapValue' in value && value.mapValue?.fields) {
         // Recursively search nested maps
@@ -331,14 +390,21 @@ const searchInDocumentFields = (fields: any, query: string, path: string = ''): 
           const arrayPath = `${currentPath}[${i}]`
 
           if (arrayItem && typeof arrayItem === 'object') {
-            if ('stringValue' in arrayItem && arrayItem.stringValue?.toLowerCase().includes(lowerQuery)) {
+            if (
+              'stringValue' in arrayItem &&
+              arrayItem.stringValue?.toLowerCase().includes(lowerQuery)
+            ) {
               return {
                 found: true,
                 matchedPath: arrayPath,
-                matchedValue: arrayItem.stringValue
+                matchedValue: arrayItem.stringValue,
               }
             } else if ('mapValue' in arrayItem && arrayItem.mapValue?.fields) {
-              const nestedResult = searchInDocumentFields(arrayItem.mapValue.fields, query, arrayPath)
+              const nestedResult = searchInDocumentFields(
+                arrayItem.mapValue.fields,
+                query,
+                arrayPath
+              )
               if (nestedResult) return nestedResult
             }
           }
@@ -361,7 +427,10 @@ const loadDocumentsForSearch = async (query: string): Promise<SearchResult[]> =>
     .filter(col => {
       const colId = col.id || col.name || ''
       // Search all collections if query is generic, or filter if query seems specific
-      return colId.toLowerCase().includes(lowerQuery) || allCollections.value.length <= SEARCH_CONFIG.MAX_COLLECTIONS_TO_SEARCH
+      return (
+        colId.toLowerCase().includes(lowerQuery) ||
+        allCollections.value.length <= SEARCH_CONFIG.MAX_COLLECTIONS_TO_SEARCH
+      )
     })
     .slice(0, SEARCH_CONFIG.MAX_COLLECTIONS_TO_SEARCH)
 
@@ -398,7 +467,7 @@ const loadDocumentsForSearch = async (query: string): Promise<SearchResult[]> =>
             focusTarget: docId,
             collectionId,
             documentPath: doc.name,
-            pathString
+            pathString,
           })
         }
 
@@ -415,7 +484,7 @@ const loadDocumentsForSearch = async (query: string): Promise<SearchResult[]> =>
               focusTarget: docId,
               collectionId,
               documentPath: doc.name,
-              pathString
+              pathString,
             })
           }
         }
@@ -432,7 +501,7 @@ const loadDocumentsForSearch = async (query: string): Promise<SearchResult[]> =>
                 subCollectionId,
                 depth + 1,
                 [...breadcrumb, collectionId, docId],
-                true  // This is a subcollection
+                true // This is a subcollection
               )
             }
           } catch {
@@ -441,7 +510,7 @@ const loadDocumentsForSearch = async (query: string): Promise<SearchResult[]> =>
         }
       }
     } catch (error) {
-      console.warn(`Failed to search collection ${collectionId}:`, error)
+      console.debug(`Failed to search collection ${collectionId}:`, error)
     }
   }
 
@@ -478,8 +547,8 @@ const hasCommonPatternMatch = (bucketName: string, query: string): boolean => {
   const lowerBucket = bucketName.toLowerCase()
   const lowerQuery = query.toLowerCase()
 
-  return SEARCH_CONFIG.COMMON_BUCKET_PREFIXES.some(prefix =>
-    lowerBucket.includes(prefix) && lowerQuery.includes(prefix)
+  return SEARCH_CONFIG.COMMON_BUCKET_PREFIXES.some(
+    prefix => lowerBucket.includes(prefix) && lowerQuery.includes(prefix)
   )
 }
 
@@ -527,21 +596,24 @@ const loadObjectsForSearch = async (query: string): Promise<StorageObjectWithPre
       const objectsResponse = await storageApi.listObjects({
         bucket: bucket.name,
         maxResults: SEARCH_CONFIG.MAX_OBJECTS_PER_BUCKET,
-        prefix: lowerQuery.includes('/') ? lowerQuery : undefined // Use query as prefix if it contains '/'
+        prefix: lowerQuery.includes('/') ? lowerQuery : undefined, // Use query as prefix if it contains '/'
       })
 
       if (objectsResponse.items) {
-        const objectsWithBucket = objectsResponse.items.map(obj => ({
-          ...obj,
-          bucket: bucket.name,
-          isFolder: obj.name.endsWith('/'),
-          downloadUrl: storageApi.getObjectDownloadUrl(bucket.name, obj.name)
-        } as StorageObjectWithPreview))
+        const objectsWithBucket = objectsResponse.items.map(
+          obj =>
+            ({
+              ...obj,
+              bucket: bucket.name,
+              isFolder: obj.name.endsWith('/'),
+              downloadUrl: storageApi.getObjectDownloadUrl(bucket.name, obj.name),
+            }) as StorageObjectWithPreview
+        )
 
         objects.push(...objectsWithBucket)
       }
     } catch (error) {
-      console.warn(`Failed to load objects from bucket ${bucket.name}:`, error)
+      console.debug(`Failed to load objects from bucket ${bucket.name}:`, error)
     }
   }
 
@@ -568,15 +640,17 @@ const performSearch = async (query: string) => {
     const displayName = getTopicDisplayName(topic.name)
     const fullName = topic.name
 
-    if (displayName.toLowerCase().includes(lowerQuery) ||
-        fullName.toLowerCase().includes(lowerQuery)) {
+    if (
+      displayName.toLowerCase().includes(lowerQuery) ||
+      fullName.toLowerCase().includes(lowerQuery)
+    ) {
       results.push({
         title: displayName,
         description: `Topic: ${fullName}`,
         type: 'topic',
         icon: QueueListIcon,
         route: `/projects/${currentProjectId.value}/pubsub/topics`,
-        focusTarget: displayName
+        focusTarget: displayName,
       })
     }
   })
@@ -587,16 +661,18 @@ const performSearch = async (query: string) => {
     const fullName = subscription.name
     const topicName = subscription.topic || subscription.topicName || 'unknown'
 
-    if (displayName.toLowerCase().includes(lowerQuery) ||
-        fullName.toLowerCase().includes(lowerQuery) ||
-        topicName.toLowerCase().includes(lowerQuery)) {
+    if (
+      displayName.toLowerCase().includes(lowerQuery) ||
+      fullName.toLowerCase().includes(lowerQuery) ||
+      topicName.toLowerCase().includes(lowerQuery)
+    ) {
       results.push({
         title: displayName,
         description: `Subscription for topic: ${getTopicDisplayName(topicName)}`,
         type: 'subscription',
         icon: InboxStackIcon,
         route: `/projects/${currentProjectId.value}/pubsub/subscriptions`,
-        focusTarget: getTopicDisplayName(topicName)
+        focusTarget: getTopicDisplayName(topicName),
       })
     }
   })
@@ -607,15 +683,17 @@ const performSearch = async (query: string) => {
     const description = template.description || ''
     const data = template.data || ''
 
-    if (name.toLowerCase().includes(lowerQuery) ||
-        description.toLowerCase().includes(lowerQuery) ||
-        data.toLowerCase().includes(lowerQuery)) {
+    if (
+      name.toLowerCase().includes(lowerQuery) ||
+      description.toLowerCase().includes(lowerQuery) ||
+      data.toLowerCase().includes(lowerQuery)
+    ) {
       results.push({
         title: name,
         description: description || `Template with ${template.data?.length || 0} characters`,
         type: 'template',
         icon: DocumentTextIcon,
-        route: `/projects/${currentProjectId.value}/pubsub/message-templates`
+        route: `/projects/${currentProjectId.value}/pubsub/message-templates`,
       })
     }
   })
@@ -626,9 +704,11 @@ const performSearch = async (query: string) => {
     const location = bucket.location || ''
     const storageClass = bucket.storageClass || ''
 
-    if (bucketName.toLowerCase().includes(lowerQuery) ||
-        location.toLowerCase().includes(lowerQuery) ||
-        storageClass.toLowerCase().includes(lowerQuery)) {
+    if (
+      bucketName.toLowerCase().includes(lowerQuery) ||
+      location.toLowerCase().includes(lowerQuery) ||
+      storageClass.toLowerCase().includes(lowerQuery)
+    ) {
       results.push({
         title: bucketName,
         description: `Bucket in ${location} (${storageClass})`,
@@ -636,13 +716,14 @@ const performSearch = async (query: string) => {
         icon: ArchiveBoxIcon,
         route: `/projects/${currentProjectId.value}/storage/buckets`,
         focusTarget: bucketName,
-        bucket: bucketName
+        bucket: bucketName,
       })
     }
   })
 
   // Search through storage objects (lazy loaded)
-  if (query.length >= SEARCH_CONFIG.MIN_QUERY_LENGTH_FOR_OBJECTS) { // Only search objects for queries with 2+ characters
+  if (query.length >= SEARCH_CONFIG.MIN_QUERY_LENGTH_FOR_OBJECTS) {
+    // Only search objects for queries with 2+ characters
     try {
       const objectsToSearch = await loadObjectsForSearch(query)
       objectsToSearch.forEach(obj => {
@@ -651,10 +732,11 @@ const performSearch = async (query: string) => {
         const contentType = obj.contentType || ''
         const fullPath = `${bucketName}/${objectName}`
 
-        if (objectName.toLowerCase().includes(lowerQuery) ||
-            contentType.toLowerCase().includes(lowerQuery) ||
-            fullPath.toLowerCase().includes(lowerQuery)) {
-
+        if (
+          objectName.toLowerCase().includes(lowerQuery) ||
+          contentType.toLowerCase().includes(lowerQuery) ||
+          fullPath.toLowerCase().includes(lowerQuery)
+        ) {
           // Get just the filename for display
           const fileName = objectName.split('/').pop() || objectName
 
@@ -666,12 +748,12 @@ const performSearch = async (query: string) => {
             route: `/projects/${currentProjectId.value}/storage/buckets/${encodeURIComponent(bucketName)}/objects`,
             focusTarget: objectName,
             bucket: bucketName,
-            objectPath: objectName
+            objectPath: objectName,
           })
         }
       })
     } catch (error) {
-      console.warn('Failed to search storage objects:', error)
+      console.debug('Failed to search storage objects:', error)
     }
   }
 
@@ -691,7 +773,7 @@ const performSearch = async (query: string) => {
         route: `/projects/${currentProjectId.value}/firestore/collections`,
         focusTarget: collectionId,
         collectionId,
-        pathString
+        pathString,
       })
     }
   })
@@ -702,7 +784,7 @@ const performSearch = async (query: string) => {
       const documentResults = await loadDocumentsForSearch(query)
       results.push(...documentResults)
     } catch (error) {
-      console.warn('Failed to search Firestore documents:', error)
+      console.debug('Failed to search Firestore documents:', error)
     }
   }
 
@@ -723,32 +805,27 @@ const groupedResults = computed(() => {
   const groups: Record<string, SearchResult[]> = {}
 
   searchResults.value.forEach(result => {
-    let groupName = ''
-    switch (result.type) {
-      case 'topic':
-        groupName = 'Topics'
-        break
-      case 'subscription':
-        groupName = 'Subscriptions'
-        break
-      case 'template':
-        groupName = 'Message Templates'
-        break
-      case 'bucket':
-        groupName = 'Storage Buckets'
-        break
-      case 'object':
-        groupName = 'Storage Objects'
-        break
-      case 'collection':
-        groupName = 'Firestore Collections'
-        break
-      case 'document':
-        groupName = 'Firestore Documents'
-        break
-      default:
-        groupName = 'Other'
+    const getGroupName = (type: string) => {
+      switch (type) {
+        case 'topic':
+          return 'Topics'
+        case 'subscription':
+          return 'Subscriptions'
+        case 'template':
+          return 'Message Templates'
+        case 'bucket':
+          return 'Storage Buckets'
+        case 'object':
+          return 'Storage Objects'
+        case 'collection':
+          return 'Firestore Collections'
+        case 'document':
+          return 'Firestore Documents'
+        default:
+          return 'Other'
+      }
     }
+    const groupName = getGroupName(result.type)
 
     if (!groups[groupName]) {
       groups[groupName] = []
@@ -795,7 +872,10 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 const selectResult = (result: SearchResult) => {
   // Add to recent searches
-  recentSearches.value = [result, ...recentSearches.value.filter(r => r.title !== result.title)].slice(0, 5)
+  recentSearches.value = [
+    result,
+    ...recentSearches.value.filter(r => r.title !== result.title),
+  ].slice(0, 5)
 
   // Navigate to result with focus target
   let targetRoute = result.route
@@ -833,7 +913,7 @@ const selectResult = (result: SearchResult) => {
   if ((result.type === 'collection' || result.type === 'document') && result.pathString) {
     router.push({
       path: targetRoute,
-      state: { navigateToPath: result.pathString }
+      state: { navigateToPath: result.pathString },
     })
   } else {
     router.push(targetRoute)
@@ -864,7 +944,7 @@ const handleClickOutside = (event: Event) => {
 onMounted(() => {
   document.addEventListener('keydown', handleGlobalKeydown)
   document.addEventListener('click', handleClickOutside)
-  
+
   // Load initial search data
   loadSearchData()
 })
@@ -885,75 +965,99 @@ onUnmounted(() => {
 })
 
 // Watch for project changes and reload data
-watch(currentProjectId, (newProjectId) => {
-  if (newProjectId) {
-    // Invalidate cache for new project
-    dataCache.value = {
-      topics: null,
-      subscriptions: null,
-      templates: null,
-      buckets: null
+watch(
+  currentProjectId,
+  newProjectId => {
+    if (newProjectId) {
+      // Invalidate cache for new project
+      dataCache.value = {
+        topics: null,
+        subscriptions: null,
+        templates: null,
+        buckets: null,
+      }
+      loadSearchData()
+    } else {
+      // Clear data when no project is selected
+      allTopics.value = []
+      allSubscriptions.value = []
+      allTemplates.value = []
+      allBuckets.value = []
+      allObjects.value = []
+      allCollections.value = []
+      searchResults.value = []
+      // Clear cache
+      dataCache.value = {
+        topics: null,
+        subscriptions: null,
+        templates: null,
+        buckets: null,
+        collections: null,
+      }
     }
-    loadSearchData()
-  } else {
-    // Clear data when no project is selected
-    allTopics.value = []
-    allSubscriptions.value = []
-    allTemplates.value = []
-    allBuckets.value = []
-    allObjects.value = []
-    allCollections.value = []
-    searchResults.value = []
-    // Clear cache
-    dataCache.value = {
-      topics: null,
-      subscriptions: null,
-      templates: null,
-      buckets: null,
-      collections: null
-    }
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+)
 
 // Watch for store changes to keep search data in sync
-watch(() => topicsStore.topics, (newTopics) => {
-  if (newTopics) {
-    allTopics.value = newTopics
-  }
-}, { deep: true })
+watch(
+  () => topicsStore.topics,
+  newTopics => {
+    if (newTopics) {
+      allTopics.value = newTopics
+    }
+  },
+  { deep: true }
+)
 
-watch(() => storageStore.buckets, (newBuckets) => {
-  if (newBuckets) {
-    allBuckets.value = newBuckets
-  }
-}, { deep: true })
+watch(
+  () => storageStore.buckets,
+  newBuckets => {
+    if (newBuckets) {
+      allBuckets.value = newBuckets
+    }
+  },
+  { deep: true }
+)
 
-watch(() => storageStore.objects, (newObjects) => {
-  if (newObjects) {
-    // Transform storage objects to search format
-    allObjects.value = newObjects.map(obj => ({
-      ...obj,
-      bucket: storageStore.currentBucket?.name || '',
-      downloadUrl: obj.downloadUrl || ''
-    }))
-  }
-}, { deep: true })
+watch(
+  () => storageStore.objects,
+  newObjects => {
+    if (newObjects) {
+      // Transform storage objects to search format
+      allObjects.value = newObjects.map(obj => ({
+        ...obj,
+        bucket: storageStore.currentBucket?.name || '',
+        downloadUrl: obj.downloadUrl || '',
+      }))
+    }
+  },
+  { deep: true }
+)
 
-watch(() => messageTemplatesStore.templates, (newTemplates) => {
-  if (newTemplates) {
-    allTemplates.value = newTemplates
-  }
-}, { deep: true })
+watch(
+  () => messageTemplatesStore.templates,
+  newTemplates => {
+    if (newTemplates) {
+      allTemplates.value = newTemplates
+    }
+  },
+  { deep: true }
+)
 
-watch(() => firestoreStore.collections, (newCollections) => {
-  if (newCollections) {
-    allCollections.value = newCollections
-  }
-}, { deep: true })
+watch(
+  () => firestoreStore.collections,
+  newCollections => {
+    if (newCollections) {
+      allCollections.value = newCollections
+    }
+  },
+  { deep: true }
+)
 
 // Refresh PubSub data when search is opened (reduced frequency)
 let refreshInterval: ReturnType<typeof setInterval> | null = null
-watch(isOpen, (open) => {
+watch(isOpen, open => {
   if (open && currentProjectId.value) {
     // Only refresh if cache is stale
     if (!isCacheValid(dataCache.value.topics) || !isCacheValid(dataCache.value.subscriptions)) {
@@ -965,7 +1069,10 @@ watch(isOpen, (open) => {
       refreshInterval = setInterval(() => {
         if (isOpen.value && currentProjectId.value) {
           // Only refresh if cache is really stale (longer than cache TTL)
-          if (!isCacheValid(dataCache.value.topics) || !isCacheValid(dataCache.value.subscriptions)) {
+          if (
+            !isCacheValid(dataCache.value.topics) ||
+            !isCacheValid(dataCache.value.subscriptions)
+          ) {
             refreshPubSubData()
           }
         }
@@ -986,7 +1093,7 @@ const refreshPubSubData = async () => {
     // Refresh both topics and subscriptions since they're created via direct API calls
     const [topics, subscriptions] = await Promise.all([
       topicsApi.getTopics(currentProjectId.value),
-      subscriptionsApi.getSubscriptions(currentProjectId.value)
+      subscriptionsApi.getSubscriptions(currentProjectId.value),
     ])
 
     allTopics.value = topics || []

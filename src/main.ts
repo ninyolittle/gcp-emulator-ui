@@ -47,16 +47,16 @@ app.use(VueQueryPlugin, {
         staleTime: 1000 * 60 * 5, // 5 minutes
         cacheTime: 1000 * 60 * 10, // 10 minutes
         retry: 3,
-        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+        retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
         refetchOnWindowFocus: false,
-        refetchOnReconnect: true
+        refetchOnReconnect: true,
       },
       mutations: {
         retry: 1,
-        retryDelay: 1000
-      }
-    }
-  }
+        retryDelay: 1000,
+      },
+    },
+  },
 })
 
 // Configure head management
@@ -74,18 +74,18 @@ const toastOptions: PluginOptions = {
   draggablePercent: 0.6,
   showCloseButtonOnHover: false,
   hideProgressBar: false,
-  closeButton: "button",
+  closeButton: 'button',
   icon: true,
   rtl: false,
   newestOnTop: true,
   maxToasts: 5,
-  transition: "Vue-Toastification__bounce",
+  transition: 'Vue-Toastification__bounce',
   toastDefaults: {
     [POSITION.TOP_RIGHT]: {
       timeout: 5000,
       closeButton: false,
-    }
-  }
+    },
+  },
 }
 app.use(Toast, toastOptions)
 
@@ -142,15 +142,16 @@ async function initializeApp() {
     // Log startup information
     console.log(`GCP Emulator UI v${app.config.globalProperties.$APP_VERSION}`)
 
-    // Initialize API connection monitoring
-    const { useApiConnection } = await import('./composables/useApiConnection')
-    const { checkConnection, startPeriodicCheck } = useApiConnection()
+    // Initialize connection monitoring using unified service connections
+    const { useServiceConnections } = await import('./composables/useServiceConnections')
+    const { checkAllConnections, startPeriodicCheck } = useServiceConnections()
 
-    // Check API connection
-    const isApiConnected = await checkConnection()
+    // Check all emulator connections
+    const connectionResult = await checkAllConnections()
+    const hasAnyConnection = Object.values(connectionResult).some(Boolean)
 
-    if (isApiConnected) {
-      // Initialize projects store only if API is connected
+    if (hasAnyConnection) {
+      // Initialize projects store only if at least one emulator is connected
       try {
         const projectsStore = useProjectsStore()
         projectsStore.initialize()
@@ -158,25 +159,26 @@ async function initializeApp() {
         // Start periodic connection monitoring
         startPeriodicCheck()
       } catch (storeError) {
-        console.warn('Failed to initialize projects store:', storeError)
+        console.debug('Failed to initialize projects store:', storeError)
         appStore.showToast({
           type: 'warning',
           title: 'Partial initialization',
-          message: 'The app loaded but some features may not work properly. Please check the API connection.',
-          persistent: true
+          message:
+            'The app loaded but some features may not work properly. Please check the API connection.',
+          persistent: true,
         })
 
         // Still start monitoring - user can retry later
         startPeriodicCheck()
       }
     } else {
-      console.warn('API connection failed during initialization - app will load with connection warnings')
+      console.debug(
+        'No emulator connections during initialization - app will load with connection warnings'
+      )
 
       // Start periodic checks to allow recovery
       startPeriodicCheck()
-
     }
-
   } catch (error) {
     console.error('Critical app initialization error:', error)
 
@@ -188,7 +190,7 @@ async function initializeApp() {
           type: 'error',
           title: 'Initialization Error',
           message: 'Failed to fully initialize the application. Please refresh the page.',
-          persistent: true
+          persistent: true,
         })
       } catch {
         // Fallback to browser alert

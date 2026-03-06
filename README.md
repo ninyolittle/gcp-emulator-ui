@@ -58,19 +58,19 @@ docker-compose up
 docker run \
    --rm \
    --publish 8085:8085 \
-   gcr.io/google.com/cloudsdktool/cloud-sdk:emulators sh -c 'gcloud beta emulators pubsub start --host-port=0.0.0.0:8085'
+   gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators sh -c 'gcloud beta emulators pubsub start --host-port=0.0.0.0:8085'
 
 # Start Google Firestore emulator
 docker run \
    --rm \
    --publish 8086:8086 \
-   gcr.io/google.com/cloudsdktool/cloud-sdk:emulators sh -c 'gcloud beta emulators firestore start --host-port=0.0.0.0:8086'
+   gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators sh -c 'gcloud beta emulators firestore start --host-port=0.0.0.0:8086'
 
 # Start Google Firestore datastore-mode emulator
 docker run \
    --rm \
    --publish 8087:8087 \
-   gcr.io/google.com/cloudsdktool/cloud-sdk:emulators sh -c 'gcloud beta emulators firestore start --database-mode=datastore-mode --host-port=0.0.0.0:8087'
+   gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators sh -c 'gcloud beta emulators firestore start --database-mode=datastore-mode --host-port=0.0.0.0:8087'
 
 # Start fake-gcs emulator
 docker run \
@@ -84,12 +84,39 @@ docker run \
    --env PUBSUB_EMULATOR_URL="host.docker.internal:8085"    \
    --env FIRESTORE_EMULATOR_URL="host.docker.internal:8086" \
    --env DATASTORE_EMULATOR_URL="host.docker.internal:8087" \
+   --env DATASTORE_FILE_SERVER_URL="host.docker.internal:9999" \
    --env STORAGE_EMULATOR_URL="host.docker.internal:4443"   \
    --publish 9090:80 \
    ghcr.io/drehelis/gcp-emulator-ui:main
 ```
 
 Browse to http://localhost:9090
+
+**Runtime Config (`/config.json`)**
+
+The UI can load optional runtime settings from `/config.json` at startup. This file is intended for container deployments where you want to inject configuration without rebuilding the app.
+
+Currently supported runtime fields:
+
+```json
+{
+  "pubsub": {
+    "pubsubPreConfiguredMsgAttr": {
+      "key": "value"
+    }
+  }
+}
+```
+
+To set `pubsubPreConfiguredMsgAttr`, provide a JSON object in the `PUBSUB_PRE_CONFIGURED_MSG_ATTR` environment variable when starting the container. Example:
+
+```bash
+docker run \
+   --rm \
+   --env PUBSUB_PRE_CONFIGURED_MSG_ATTR='{"source":"local","env":"dev"}' \
+   --publish 9090:80 \
+   ghcr.io/drehelis/gcp-emulator-ui:main
+```
 
 ### Development Setup
 
@@ -100,7 +127,7 @@ Browse to http://localhost:9090
    code .
    (run in devcontainer)
    
-   npm install
+   bun install
    ```
 
 2. **Configure environment**
@@ -111,7 +138,7 @@ Browse to http://localhost:9090
 
 3. **Start the development server**
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 4. **Open your browser**
@@ -123,10 +150,11 @@ Browse to http://localhost:9090
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_PUBSUB_BASE_URL` | `http://localhost:8085` | Pub/Sub emulator endpoint |
-| `VITE_FIRESTORE_BASE_URL` | `http://localhost:8086` | Firestore emulator endpoint |
-| `VITE_DATASTORE_BASE_URL` | `http://localhost:8087` | Firestore datastore-mode emulator endpoint |
-| `VITE_STORAGE_BASE_URL` | `http://localhost:4443` | Storage emulator endpoint |
+| `VITE_PUBSUB_BASE_URL` | `/pubsub` | Pub/Sub emulator endpoint |
+| `VITE_FIRESTORE_BASE_URL` | `/firestore` | Firestore emulator endpoint |
+| `VITE_DATASTORE_BASE_URL` | `/datastore` | Firestore datastore-mode emulator endpoint |
+| `VITE_STORAGE_BASE_URL` | `/storage` | Storage emulator endpoint |
+| `VITE_FILE_SERVER_BASE_URL` | `/fs` | File server endpoint for Datastore import/export operations |
 
 ## Development
 

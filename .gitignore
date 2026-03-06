@@ -4,7 +4,11 @@ node_modules
 dist
 dev-dist
 
-
 .claude
 CLAUDE.md
 repomix.md
+.agent/
+.agents/
+
+coverage/**
+tests-report.json

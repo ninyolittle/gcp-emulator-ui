@@ -10,22 +10,24 @@
  */
 export const getMeaningfulErrorMessage = (error: any): string => {
   // Check for specific status codes and provide meaningful messages
-  if (error.response?.status === 409) {
+  const statusCode = error.code || error.status || error.response?.status
+
+  if (statusCode === 409) {
     return 'ALREADY_EXISTS: Resource already exists'
   }
-  if (error.response?.status === 404) {
+  if (statusCode === 404) {
     return 'NOT_FOUND: Resource not found'
   }
-  if (error.response?.status === 400) {
+  if (statusCode === 400) {
     return 'INVALID_REQUEST: Invalid request parameters'
   }
-  if (error.response?.status === 403) {
+  if (statusCode === 403) {
     return 'PERMISSION_DENIED: Access denied'
   }
-  if (error.response?.status === 500) {
+  if (statusCode === 500) {
     return 'INTERNAL_ERROR: Server internal error'
   }
-  
+
   // Check if the error message already contains meaningful information
   if (error.message?.includes('ALREADY_EXISTS')) {
     return error.message
@@ -39,23 +41,29 @@ export const getMeaningfulErrorMessage = (error: any): string => {
   if (error.message?.includes('INVALID_')) {
     return error.message
   }
-  
+
   // For generic HTTP errors, provide meaningful alternatives
   if (error.message?.includes('Request failed with status code')) {
     const statusMatch = error.message.match(/status code (\d+)/)
     if (statusMatch) {
       const status = parseInt(statusMatch[1])
       switch (status) {
-        case 409: return 'ALREADY_EXISTS: Resource already exists'
-        case 404: return 'NOT_FOUND: Resource not found'  
-        case 400: return 'INVALID_REQUEST: Invalid request parameters'
-        case 403: return 'PERMISSION_DENIED: Access denied'
-        case 500: return 'INTERNAL_ERROR: Server internal error'
-        default: return `HTTP_ERROR: Request failed (${status})`
+        case 409:
+          return 'ALREADY_EXISTS: Resource already exists'
+        case 404:
+          return 'NOT_FOUND: Resource not found'
+        case 400:
+          return 'INVALID_REQUEST: Invalid request parameters'
+        case 403:
+          return 'PERMISSION_DENIED: Access denied'
+        case 500:
+          return 'INTERNAL_ERROR: Server internal error'
+        default:
+          return `HTTP_ERROR: Request failed (${status})`
       }
     }
   }
-  
+
   // Return original message or fallback
   return error.message || 'Unknown error occurred'
 }
@@ -68,7 +76,7 @@ export const getMeaningfulErrorMessage = (error: any): string => {
  */
 export const getPubSubErrorMessage = (error: any, operation: string): string => {
   const baseMessage = getMeaningfulErrorMessage(error)
-  
+
   // Add context for specific PubSub operations
   if (baseMessage.includes('ALREADY_EXISTS')) {
     if (operation.includes('subscription')) {
@@ -78,7 +86,7 @@ export const getPubSubErrorMessage = (error: any, operation: string): string => 
       return 'ALREADY_EXISTS: A topic with this name already exists. Please choose a different name.'
     }
   }
-  
+
   if (baseMessage.includes('NOT_FOUND')) {
     if (operation.includes('subscription')) {
       return 'NOT_FOUND: The subscription no longer exists. It may have been deleted by another process.'
@@ -87,7 +95,7 @@ export const getPubSubErrorMessage = (error: any, operation: string): string => 
       return 'NOT_FOUND: The topic no longer exists. Please refresh the page to see the current state.'
     }
   }
-  
+
   return baseMessage
 }
 

@@ -69,7 +69,20 @@ export interface ModalConfig {
   component: Component
   props?: Record<string, any>
   options?: {
-    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'
+    size?:
+      | 'xs'
+      | 'sm'
+      | 'md'
+      | 'lg'
+      | 'xl'
+      | '2xl'
+      | '3xl'
+      | '4xl'
+      | '5xl'
+      | '6xl'
+      | '7xl'
+      | 'full'
+      | (string & {})
     persistent?: boolean
     backdrop?: boolean
     keyboard?: boolean
@@ -91,7 +104,18 @@ export interface DialogAction {
 export interface FormField {
   name: string
   label: string
-  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'date' | 'datetime'
+  type:
+    | 'text'
+    | 'email'
+    | 'password'
+    | 'number'
+    | 'textarea'
+    | 'select'
+    | 'checkbox'
+    | 'radio'
+    | 'file'
+    | 'date'
+    | 'datetime'
   placeholder?: string
   required?: boolean
   disabled?: boolean
@@ -316,16 +340,6 @@ export interface VirtualScrollConfig {
   enabled?: boolean
 }
 
-// Keyboard shortcuts types
-export interface KeyboardShortcut {
-  key: string
-  modifiers?: ('ctrl' | 'alt' | 'shift' | 'meta')[]
-  description: string
-  action: () => void
-  enabled?: boolean
-  global?: boolean
-}
-
 // Context menu types
 export interface ContextMenuItem {
   label: string
@@ -423,16 +437,6 @@ export interface ViewportState {
   desktop: boolean
 }
 
-// Performance monitoring
-export interface PerformanceMetrics {
-  renderTime: number
-  loadTime: number
-  memoryUsage: number
-  bundleSize: number
-  cacheHits: number
-  apiCalls: number
-}
-
 // Feature flags for UI
 export interface UIFeatureFlags {
   enableAdvancedSearch: boolean
@@ -440,7 +444,6 @@ export interface UIFeatureFlags {
   enableDragAndDrop: boolean
   enableVirtualScrolling: boolean
   enableRealTimeUpdates: boolean
-  enableKeyboardShortcuts: boolean
   enableContextMenu: boolean
   maxTableRows: number
   maxChartDataPoints: number

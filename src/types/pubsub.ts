@@ -27,7 +27,11 @@ export interface GCPProject extends BaseEntity {
 
 export type ProjectState = 'ACTIVE' | 'DELETE_REQUESTED'
 
-export type ProjectLifecycleState = 'LIFECYCLE_STATE_UNSPECIFIED' | 'ACTIVE' | 'DELETE_REQUESTED' | 'DELETE_IN_PROGRESS'
+export type ProjectLifecycleState =
+  | 'LIFECYCLE_STATE_UNSPECIFIED'
+  | 'ACTIVE'
+  | 'DELETE_REQUESTED'
+  | 'DELETE_IN_PROGRESS'
 
 // Topic related types
 export interface PubSubTopic extends BaseEntity {
@@ -77,7 +81,13 @@ export interface CloudStorageConfig {
   avroConfig?: AvroConfig
 }
 
-export type IngestionDataSourceState = 'STATE_UNSPECIFIED' | 'ACTIVE' | 'KINESIS_PERMISSION_DENIED' | 'PUBLISH_PERMISSION_DENIED' | 'STREAM_NOT_FOUND' | 'CONSUMER_NOT_FOUND'
+export type IngestionDataSourceState =
+  | 'STATE_UNSPECIFIED'
+  | 'ACTIVE'
+  | 'KINESIS_PERMISSION_DENIED'
+  | 'PUBLISH_PERMISSION_DENIED'
+  | 'STREAM_NOT_FOUND'
+  | 'CONSUMER_NOT_FOUND'
 
 export interface InputFormat {
   format: CloudStorageInputFormat
@@ -164,7 +174,11 @@ export interface OutputFormat {
   avroConfig?: AvroConfig
 }
 
-export type CloudStorageConfigState = 'STATE_UNSPECIFIED' | 'ACTIVE' | 'PERMISSION_DENIED' | 'NOT_FOUND'
+export type CloudStorageConfigState =
+  | 'STATE_UNSPECIFIED'
+  | 'ACTIVE'
+  | 'PERMISSION_DENIED'
+  | 'NOT_FOUND'
 
 export interface DeadLetterPolicy {
   deadLetterTopic?: string
@@ -268,36 +282,6 @@ export interface Snapshot extends BaseEntity {
   expireTime?: Date
 }
 
-// Metrics and monitoring types
-export interface MetricValue {
-  timestamp: Date
-  value: number
-}
-
-export interface TopicMetrics {
-  messageCount: MetricValue[]
-  messageBytes: MetricValue[]
-  publishMessageCount: MetricValue[]
-  publishedMessageBytes: MetricValue[]
-  publishRequestCount: MetricValue[]
-}
-
-export interface SubscriptionMetrics {
-  messageCount: MetricValue[]
-  oldestUnackedMessageAge: MetricValue[]
-  unackedMessageCount: MetricValue[]
-  pullMessageCount: MetricValue[]
-  pullRequestCount: MetricValue[]
-  pushMessageCount: MetricValue[]
-  pushRequestCount: MetricValue[]
-  deadLetterMessageCount?: MetricValue[]
-  retainedAckedMessageCount?: MetricValue[]
-  retainedAckedMessageBytes?: MetricValue[]
-  streamingPullMessageCount?: MetricValue[]
-  streamingPullRequestCount?: MetricValue[]
-  deliveryAttemptCount?: MetricValue[]
-}
-
 // Search and filtering types
 export interface SearchFilters {
   projectId?: string
@@ -370,7 +354,12 @@ export interface BatchOperation<T> {
   completedAt?: Date
 }
 
-export type BatchOperationType = 'CREATE_TOPICS' | 'DELETE_TOPICS' | 'CREATE_SUBSCRIPTIONS' | 'DELETE_SUBSCRIPTIONS' | 'PUBLISH_MESSAGES'
+export type BatchOperationType =
+  | 'CREATE_TOPICS'
+  | 'DELETE_TOPICS'
+  | 'CREATE_SUBSCRIPTIONS'
+  | 'DELETE_SUBSCRIPTIONS'
+  | 'PUBLISH_MESSAGES'
 
 export type BatchOperationStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
 
@@ -455,6 +444,7 @@ export interface CreateSubscriptionRequest {
   messageRetentionDuration?: string
   enableMessageOrdering?: boolean
   labels?: Record<string, string>
+  filter?: string
   pushConfig?: {
     pushEndpoint: string
     attributes?: Record<string, string>
@@ -516,25 +506,4 @@ export interface PublishMessageForm {
   data: string
   attributes: Record<string, string>
   orderingKey?: string
-}
-
-// Analytics and reporting types
-export interface AnalyticsData {
-  timeRange: DateRange
-  topicMetrics: Record<string, TopicMetrics>
-  subscriptionMetrics: Record<string, SubscriptionMetrics>
-  summary: {
-    totalTopics: number
-    totalSubscriptions: number
-    totalMessages: number
-    errorRate: number
-  }
-}
-
-export interface ReportConfig {
-  entities: ('topics' | 'subscriptions' | 'schemas')[]
-  metrics: string[]
-  timeRange: DateRange
-  format: 'pdf' | 'excel' | 'csv'
-  includeCharts: boolean
 }

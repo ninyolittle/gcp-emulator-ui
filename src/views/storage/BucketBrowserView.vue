@@ -13,17 +13,19 @@
               >
                 <ArrowLeftIcon class="w-5 h-5" />
               </router-link>
-              
+
               <div class="min-w-0 flex-1">
                 <div class="flex items-center space-x-2">
-                  <ArchiveBoxIcon class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <ArchiveBoxIcon
+                    class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400 flex-shrink-0"
+                  />
                   <h1 class="text-sm sm:text-xl font-bold text-gray-900 dark:text-white truncate">
                     {{ bucketName }}
                   </h1>
                 </div>
               </div>
             </div>
-            
+
             <!-- Action buttons -->
             <div class="flex items-center gap-2 flex-shrink-0">
               <button
@@ -32,9 +34,21 @@
                 class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ArrowPathIcon
-                  :class="['w-4 h-4', storageStore.loading.objects ? 'animate-spin' : '', 'sm:mr-2']"
+                  :class="[
+                    'w-4 h-4',
+                    storageStore.loading.objects ? 'animate-spin' : '',
+                    'sm:mr-2',
+                  ]"
                 />
                 <span class="hidden sm:inline">Refresh</span>
+              </button>
+
+              <button
+                @click="showCreateFolderModal = true"
+                class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              >
+                <FolderPlusIcon class="w-4 h-4 sm:mr-2" />
+                <span class="hidden sm:inline">New Folder</span>
               </button>
 
               <button
@@ -46,7 +60,6 @@
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -69,7 +82,11 @@
 
           <!-- Show folder breadcrumbs only when in subfolders -->
           <template v-if="storageStore.breadcrumbs.length > 0">
-            <li v-for="(breadcrumb, index) in storageStore.breadcrumbs" :key="index" class="flex items-baseline">
+            <li
+              v-for="(breadcrumb, index) in storageStore.breadcrumbs"
+              :key="index"
+              class="flex items-baseline"
+            >
               <ChevronRightIcon class="flex-shrink-0 h-4 w-4 text-gray-400 mx-2" />
               <button
                 v-if="!breadcrumb.isLast"
@@ -86,37 +103,62 @@
         </ol>
 
         <!-- Selection actions -->
-        <div v-if="storageStore.selectedObjects.length > 0 || downloadingZip" class="flex items-center space-x-2">
-            <button
-              @click="downloadSelectedAsZip"
-              :disabled="downloadingZip"
-              class="inline-flex items-center px-1 sm:px-2 text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ArrowDownTrayIcon :class="['w-3 h-3 sm:w-4 sm:h-4 sm:mr-1', downloadingZip ? 'animate-pulse' : '']" />
-              <span class="hidden sm:inline">{{ downloadingZip ? ((downloadContext?.count || storageStore.selectedObjects.length) === 1 ? 'Downloading...' : 'Creating ZIP...') : `Download (${downloadContext?.count || storageStore.selectedObjects.length})` }}</span>
-            </button>
-            <button
-              @click="confirmBulkDelete"
-              :disabled="storageStore.loading.delete"
-              class="inline-flex items-center px-1 sm:px-2 text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <TrashIcon class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-              <span class="hidden sm:inline">Delete</span>
-            </button>
-            <button
-              @click="storageStore.clearSelection"
-              :disabled="downloadingZip"
-              class="inline-flex items-center px-1 sm:px-2 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <XMarkIcon class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-              <span class="hidden sm:inline">Clear</span>
-            </button>
+        <div
+          v-if="storageStore.selectedObjects.length > 0 || downloadingZip"
+          class="flex items-center space-x-2"
+        >
+          <button
+            @click="downloadSelectedAsZip"
+            :disabled="downloadingZip"
+            class="inline-flex items-center px-1 sm:px-2 text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <ArrowDownTrayIcon
+              :class="['w-3 h-3 sm:w-4 sm:h-4 sm:mr-1', downloadingZip ? 'animate-pulse' : '']"
+            />
+            <span class="hidden sm:inline">{{
+              downloadingZip
+                ? (downloadContext?.count || storageStore.selectedObjects.length) === 1
+                  ? 'Downloading...'
+                  : 'Creating ZIP...'
+                : `Download (${downloadContext?.count || storageStore.selectedObjects.length})`
+            }}</span>
+          </button>
+          <button
+            v-if="storageStore.selectedObjects.length === 1 && !downloadingZip"
+            @click="copyLinkToClipboard"
+            class="inline-flex items-center px-1 sm:px-2 text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded focus:outline-none transition-colors"
+            title="Copy link to file"
+          >
+            <LinkIcon class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span class="hidden sm:inline">Copy Link</span>
+          </button>
+          <button
+            @click="confirmBulkDelete"
+            :disabled="storageStore.loading.delete"
+            class="inline-flex items-center px-1 sm:px-2 text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <TrashIcon class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span class="hidden sm:inline">Delete</span>
+          </button>
+          <button
+            @click="storageStore.clearSelection"
+            :disabled="downloadingZip"
+            class="inline-flex items-center px-1 sm:px-2 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <XMarkIcon class="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+            <span class="hidden sm:inline">Clear</span>
+          </button>
         </div>
       </nav>
 
       <!-- Loading State -->
-      <div v-if="storageStore.loading.objects && !storageStore.objects.length" class="text-center py-12">
-        <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm text-blue-600 dark:text-blue-400 transition">
+      <div
+        v-if="storageStore.loading.objects && !storageStore.objects.length"
+        class="text-center py-12"
+      >
+        <div
+          class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm text-blue-600 dark:text-blue-400 transition"
+        >
           <ArrowPathIcon class="animate-spin -ml-1 mr-3 h-5 w-5" />
           Loading objects...
         </div>
@@ -124,7 +166,9 @@
 
       <!-- Error State -->
       <div v-else-if="storageStore.hasError" class="text-center py-12">
-        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md mx-auto">
+        <div
+          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md mx-auto"
+        >
           <ExclamationTriangleIcon class="h-12 w-12 text-red-600 dark:text-red-400 mx-auto mb-4" />
           <h3 class="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
             Error Loading Objects
@@ -144,120 +188,33 @@
 
       <!-- Empty State with Drag & Drop -->
       <div v-else-if="!storageStore.objects.length" class="text-center py-12">
-        <div
-          class="bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 p-8 max-w-2xl mx-auto transition-colors"
-          :class="{
-            'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/10': isDragOver
-          }"
-          @dragover.prevent="handleDragOver"
-          @dragenter.prevent="handleDragEnter"
-          @dragleave.prevent="handleDragLeave"
-          @drop.prevent="handleDrop"
-        >
-          <!-- Upload Icon -->
-          <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-4 mx-auto">
-            <ArrowUpTrayIcon v-if="!storageStore.loading.upload" class="w-8 h-8 text-blue-600 dark:text-blue-400" />
-            <ArrowPathIcon v-else class="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
-          </div>
-
-          <!-- Upload Text -->
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            <span v-if="!storageStore.loading.upload">No Objects Found</span>
-            <span v-else>Uploading Files...</span>
-          </h3>
-
-          <p v-if="!storageStore.loading.upload" class="text-gray-600 dark:text-gray-400 text-sm mb-6">
-            <span v-if="!isDragOver">
-              This {{ currentPath ? 'folder' : 'bucket' }} is empty.
-              <strong>Drag and drop files here</strong> or click to upload.
-            </span>
-            <span v-else class="text-blue-600 dark:text-blue-400 font-medium">
-              Drop files here to upload
-            </span>
-          </p>
-
-          <!-- Upload Progress -->
-          <div v-if="storageStore.loading.upload && storageStore.uploadProgress.length > 0" class="mb-6">
-            <div class="space-y-2">
-              <div
-                v-for="progress in storageStore.uploadProgress"
-                :key="progress.file.name"
-                class="flex items-center justify-between text-xs"
-              >
-                <span class="text-gray-600 dark:text-gray-400 truncate mr-4">{{ progress.file.name }}</span>
-                <div class="flex items-center space-x-2">
-                  <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                    <div
-                      class="bg-blue-600 h-1.5 rounded-full transition-all"
-                      :style="{ width: `${progress.percentage}%` }"
-                    ></div>
-                  </div>
-                  <span class="text-gray-500 dark:text-gray-400 w-8 text-right">{{ progress.percentage }}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Upload Buttons -->
-          <div v-if="!storageStore.loading.upload" class="flex flex-col items-center justify-center">
-            <div class="flex flex-col sm:flex-row gap-3 items-center justify-center mb-3">
-              <button
-                @click="showCreateFolderModal = true"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-              >
-                <FolderPlusIcon class="w-4 h-4 mr-2" />
-                Create Folder
-              </button>
-              <button
-                @click="showCreateFileModal = true"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-              >
-                <DocumentTextIcon class="w-4 h-4 mr-2" />
-                Create File
-              </button>
-              <button
-                @click="triggerFileInput"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-              >
-                <ArrowUpTrayIcon class="w-4 h-4 mr-2" />
-                Choose Files
-              </button>
-            </div>
-            <div class="text-center">
-              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                or drag and drop files here
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                Multiple files supported • Max 100MB per file
-              </div>
-            </div>
-          </div>
-
-          <!-- Hidden File Input -->
-          <input
-            ref="fileInput"
-            type="file"
-            multiple
-            class="hidden"
-            @change="handleFileSelect"
-            accept="*/*"
-          />
-        </div>
+        <FileDropZone
+          :bucket-name="bucketName"
+          :current-path="currentPath"
+          :loading="storageStore.loading.upload"
+          :upload-progress="storageStore.uploadProgress"
+          @files-selected="uploadFiles"
+          @create-file="showCreateFileModal = true"
+        />
       </div>
 
       <!-- Objects List View -->
-      <div v-else-if="storageStore.viewMode === 'list'" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div
+        v-else-if="storageStore.viewMode === 'list'"
+        class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+      >
         <!-- Desktop Table View -->
         <div class="hidden md:block overflow-x-auto">
           <table class="min-w-full">
-            <thead class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+            <thead
+              class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700"
+            >
               <tr>
                 <th class="w-10 px-3 py-2 text-left">
                   <input
                     type="checkbox"
-                    :checked="allObjectsSelected"
-                    :indeterminate="someObjectsSelected"
-                    @change="toggleSelectAll"
+                    v-model="allObjectsSelected"
+                    :indeterminate.prop="someObjectsSelected"
                     class="w-3.5 h-3.5 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-1 dark:bg-gray-700 dark:border-gray-600"
                   />
                 </th>
@@ -272,7 +229,9 @@
                       class="w-3 h-3 ml-1"
                     />
                     <ChevronDownIcon
-                      v-else-if="storageStore.sortBy === 'name' && storageStore.sortOrder === 'desc'"
+                      v-else-if="
+                        storageStore.sortBy === 'name' && storageStore.sortOrder === 'desc'
+                      "
                       class="w-3 h-3 ml-1"
                     />
                     <div v-else class="w-3 h-3 ml-1"></div>
@@ -289,7 +248,9 @@
                       class="w-3 h-3 ml-1"
                     />
                     <ChevronDownIcon
-                      v-else-if="storageStore.sortBy === 'size' && storageStore.sortOrder === 'desc'"
+                      v-else-if="
+                        storageStore.sortBy === 'size' && storageStore.sortOrder === 'desc'
+                      "
                       class="w-3 h-3 ml-1"
                     />
                     <div v-else class="w-3 h-3 ml-1"></div>
@@ -306,7 +267,9 @@
                       class="w-3 h-3 ml-1"
                     />
                     <ChevronDownIcon
-                      v-else-if="storageStore.sortBy === 'type' && storageStore.sortOrder === 'desc'"
+                      v-else-if="
+                        storageStore.sortBy === 'type' && storageStore.sortOrder === 'desc'
+                      "
                       class="w-3 h-3 ml-1"
                     />
                     <div v-else class="w-3 h-3 ml-1"></div>
@@ -323,7 +286,9 @@
                       class="w-3 h-3 ml-1"
                     />
                     <ChevronDownIcon
-                      v-else-if="storageStore.sortBy === 'modified' && storageStore.sortOrder === 'desc'"
+                      v-else-if="
+                        storageStore.sortBy === 'modified' && storageStore.sortOrder === 'desc'
+                      "
                       class="w-3 h-3 ml-1"
                     />
                     <div v-else class="w-3 h-3 ml-1"></div>
@@ -336,27 +301,26 @@
               <tr
                 v-for="(object, index) in storageStore.objects"
                 :key="object.name"
-                class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                class="group relative hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                 :class="[
-                  { 'bg-blue-50 dark:bg-blue-900/20': storageStore.selectedObjects.includes(object.name) },
-                  index !== storageStore.objects.length - 1 ? 'border-b border-gray-100 dark:border-gray-700/50' : ''
+                  {
+                    'bg-blue-50 dark:bg-blue-900/20': storageStore.selectedObjects.includes(
+                      object.fullPath || object.name
+                    ),
+                  },
+                  index !== storageStore.objects.length - 1
+                    ? 'border-b border-gray-100 dark:border-gray-700/50'
+                    : '',
                 ]"
                 @click="handleObjectClick(object)"
               >
-                <td class="px-3 py-1.5">
+                <td class="px-3 py-1.5" @click.stop>
                   <input
-                    v-if="!object.isFolder"
                     type="checkbox"
-                    :checked="storageStore.selectedObjects.includes(object.name)"
-                    @click.stop="storageStore.selectObject(object.name)"
-                    @change="() => {}"
-                    class="w-3.5 h-3.5 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-1 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <input
-                    v-else
-                    type="checkbox"
-                    disabled
-                    class="w-3.5 h-3.5 text-gray-400 bg-gray-100 border-gray-300 rounded cursor-not-allowed dark:bg-gray-600 dark:border-gray-500 opacity-50"
+                    :checked="storageStore.selectedObjects.includes(object.fullPath || object.name)"
+                    @change.stop="storageStore.selectObject(object.fullPath || object.name)"
+                    class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-1 dark:bg-gray-700 dark:border-gray-600"
+                    @click.stop
                   />
                 </td>
                 <td class="px-3 py-1.5">
@@ -369,7 +333,10 @@
                       v-else
                       class="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2 flex-shrink-0"
                     />
-                    <span class="text-xs font-medium text-gray-900 dark:text-white truncate" :title="object.isFolder ? object.name : getFileName(object.name)">
+                    <span
+                      class="text-xs font-medium text-gray-900 dark:text-white truncate"
+                      :title="object.isFolder ? object.name : getFileName(object.name)"
+                    >
                       {{ object.isFolder ? object.name : getFileName(object.name) }}
                     </span>
                   </div>
@@ -378,8 +345,11 @@
                   {{ object.isFolder ? '—' : formatFileSize(parseInt(object.size || '0')) }}
                 </td>
                 <td class="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400">
-                  <span class="truncate" :title="object.isFolder ? 'Folder' : (object.contentType || 'Unknown')">
-                    {{ object.isFolder ? 'Folder' : (object.contentType || 'Unknown') }}
+                  <span
+                    class="truncate"
+                    :title="object.isFolder ? 'Folder' : object.contentType || 'Unknown'"
+                  >
+                    {{ object.isFolder ? 'Folder' : object.contentType || 'Unknown' }}
                   </span>
                 </td>
                 <td class="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
@@ -405,12 +375,11 @@
           <!-- Mobile Header with Sort -->
           <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
+              <div class="flex items-center space-x-3" @click.stop>
                 <input
                   type="checkbox"
-                  :checked="allObjectsSelected"
-                  :indeterminate="someObjectsSelected"
-                  @change="toggleSelectAll"
+                  v-model="allObjectsSelected"
+                  :indeterminate.prop="someObjectsSelected"
                   class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-1 dark:bg-gray-700 dark:border-gray-600"
                 />
                 <span class="text-sm font-medium text-gray-900 dark:text-white">
@@ -437,24 +406,23 @@
               v-for="object in storageStore.objects"
               :key="object.name"
               class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              :class="{ 'bg-blue-50 dark:bg-blue-900/20': storageStore.selectedObjects.includes(object.name) }"
+              :class="{
+                'bg-blue-50 dark:bg-blue-900/20': storageStore.selectedObjects.includes(
+                  object.fullPath || object.name
+                ),
+              }"
               @click="handleObjectClick(object)"
             >
               <div class="flex items-start space-x-3">
-                <input
-                  v-if="!object.isFolder"
-                  type="checkbox"
-                  :checked="storageStore.selectedObjects.includes(object.name)"
-                  @click.stop="storageStore.selectObject(object.name)"
-                  @change="() => {}"
-                  class="mt-1 w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-1 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <input
-                  v-else
-                  type="checkbox"
-                  disabled
-                  class="mt-1 w-4 h-4 text-gray-400 bg-gray-100 border-gray-300 rounded cursor-not-allowed dark:bg-gray-600 dark:border-gray-500 opacity-50"
-                />
+                <div @click.stop>
+                  <input
+                    type="checkbox"
+                    :checked="storageStore.selectedObjects.includes(object.fullPath || object.name)"
+                    @change.stop="storageStore.selectObject(object.fullPath || object.name)"
+                    class="mt-1 w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-1 dark:bg-gray-700 dark:border-gray-600"
+                    @click.stop
+                  />
+                </div>
 
                 <FolderIcon
                   v-if="object.isFolder"
@@ -480,7 +448,9 @@
                     </button>
                   </div>
 
-                  <div class="mt-1 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <div
+                    class="mt-1 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400"
+                  >
                     <div class="flex items-center space-x-4">
                       <span v-if="!object.isFolder">
                         {{ formatFileSize(parseInt(object.size || '0')) }}
@@ -506,36 +476,49 @@
           v-for="object in storageStore.objects"
           :key="object.name"
           class="group relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md dark:hover:shadow-blue-900/10 transition-all cursor-pointer"
-          :class="{ 'ring-2 ring-blue-500 dark:ring-blue-400': storageStore.selectedObjects.includes(object.name) }"
+          :class="{
+            'ring-2 ring-blue-500 dark:ring-blue-400': storageStore.selectedObjects.includes(
+              object.fullPath || object.name
+            ),
+          }"
           @click="handleObjectClick(object)"
         >
           <!-- Selection checkbox -->
           <div
             v-if="!object.isFolder"
-            class="absolute top-2 left-2 transition-opacity"
+            class="absolute top-2 left-2 transition-opacity z-10"
+            @click.stop
             :class="[
-              storageStore.selectedObjects.includes(object.name)
+              storageStore.selectedObjects.includes(object.fullPath || object.name)
                 ? 'opacity-100'
-                : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
+                : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100',
             ]"
           >
             <input
               type="checkbox"
-              :checked="storageStore.selectedObjects.includes(object.name)"
-              @click.stop="storageStore.selectObject(object.name)"
-              @change="() => {}"
+              :checked="storageStore.selectedObjects.includes(object.fullPath || object.name)"
+              @change.stop="storageStore.selectObject(object.fullPath || object.name)"
               class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              @click.stop
             />
           </div>
-          <!-- Disabled checkbox for folders -->
+          <!-- Folder checkbox -->
           <div
             v-else
-            class="absolute top-2 left-2 opacity-50"
+            class="absolute top-2 left-2 transition-opacity z-10"
+            @click.stop
+            :class="[
+              storageStore.selectedObjects.includes(object.fullPath || object.name)
+                ? 'opacity-100'
+                : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100',
+            ]"
           >
             <input
               type="checkbox"
-              disabled
-              class="w-4 h-4 text-gray-400 bg-gray-100 border-gray-300 rounded cursor-not-allowed dark:bg-gray-600 dark:border-gray-500"
+              :checked="storageStore.selectedObjects.includes(object.fullPath || object.name)"
+              @change.stop="storageStore.selectObject(object.fullPath || object.name)"
+              class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              @click.stop
             />
           </div>
 
@@ -553,16 +536,16 @@
                 v-else-if="object.isFolder"
                 class="w-12 h-12 text-blue-500 dark:text-blue-400"
               />
-              <DocumentIcon
-                v-else
-                class="w-12 h-12 text-gray-400 dark:text-gray-500"
-              />
+              <DocumentIcon v-else class="w-12 h-12 text-gray-400 dark:text-gray-500" />
             </div>
-            
-            <p class="text-xs font-medium text-gray-900 dark:text-white truncate w-full" :title="object.name">
+
+            <p
+              class="text-xs font-medium text-gray-900 dark:text-white truncate w-full"
+              :title="object.name"
+            >
               {{ object.isFolder ? object.name : getFileName(object.name) }}
             </p>
-            
+
             <p v-if="!object.isFolder" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {{ formatFileSize(parseInt(object.size || '0')) }}
             </p>
@@ -577,7 +560,10 @@
           :disabled="storageStore.loading.objects"
           class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <ArrowPathIcon v-if="storageStore.loading.objects" class="animate-spin -ml-1 mr-2 h-4 w-4" />
+          <ArrowPathIcon
+            v-if="storageStore.loading.objects"
+            class="animate-spin -ml-1 mr-2 h-4 w-4"
+          />
           {{ storageStore.loading.objects ? 'Loading...' : 'Load More' }}
         </button>
       </div>
@@ -592,9 +578,10 @@
       :is-loading="storageStore.loading.delete"
       :details="{
         title: deleteModal.objects.length === 1 ? 'Object Details' : 'Objects to Delete',
-        description: deleteModal.objects.length === 1
-          ? deleteModal.objects[0]
-          : `${deleteModal.objects.length} selected objects`
+        description:
+          deleteModal.objects.length === 1
+            ? deleteModal.objects[0]
+            : `${deleteModal.objects.length} selected objects`,
       }"
       @confirm="handleBulkDelete"
       @cancel="cancelDelete"
@@ -612,11 +599,15 @@
           leave-from="opacity-100"
           leave-to="opacity-0"
         >
-          <div class="fixed inset-0 backdrop-blur-[2px] bg-white/5 dark:bg-black/5 transition-opacity" />
+          <div
+            class="fixed inset-0 backdrop-blur-[2px] bg-white/5 dark:bg-black/5 transition-opacity"
+          />
         </TransitionChild>
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
-          <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div
+            class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
+          >
             <TransitionChild
               as="template"
               enter=""
@@ -626,76 +617,25 @@
               leave-from="opacity-100 translate-y-0 sm:scale-100"
               leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+              <DialogPanel
+                class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6"
+              >
                 <div>
-                  <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
-                    <ArrowUpTrayIcon class="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div class="mt-3 text-center sm:mt-5">
-                    <DialogTitle as="h3" class="text-lg font-semibold leading-6 text-gray-900 dark:text-white">
-                      Upload Files
-                    </DialogTitle>
-                    <div class="mt-2">
-                      <p class="text-sm text-gray-500 dark:text-gray-400">
-                        Upload files to <span class="font-medium">{{ bucketName }}</span>{{ currentPath ? `/${currentPath}` : '' }}
-                      </p>
-                    </div>
-                  </div>
+                  <!-- Header removed as requested -->
                 </div>
 
                 <!-- Upload Area -->
-                <div class="mt-6">
-                  <div
-                    @drop.prevent="handleModalDrop"
-                    @dragover.prevent="isDragOver = true"
-                    @dragleave.prevent="isDragOver = false"
-                    :class="[
-                      'border-2 border-dashed rounded-lg p-6 text-center transition-colors',
-                      isDragOver
-                        ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                    ]"
-                  >
-                    <ArrowUpTrayIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <div class="mt-4">
-                      <div class="flex flex-col sm:flex-row gap-3 items-center justify-center">
-                        <button
-                          @click="showUploadModal = false; showCreateFileModal = true"
-                          class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-                        >
-                          <DocumentTextIcon class="w-4 h-4 mr-2" />
-                          Create File
-                        </button>
-                        <button
-                          @click="showUploadModal = false; showCreateFolderModal = true"
-                          class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors"
-                        >
-                          <FolderPlusIcon class="w-4 h-4 mr-2" />
-                          Create Folder
-                        </button>
-                        <label for="upload-files" class="cursor-pointer">
-                          <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors">
-                            <ArrowUpTrayIcon class="w-4 h-4 mr-2" />
-                            Choose Files
-                          </span>
-                          <input
-                            id="upload-files"
-                            ref="modalFileInput"
-                            type="file"
-                            multiple
-                            class="sr-only"
-                            @change="handleModalFileSelect"
-                          />
-                        </label>
-                      </div>
-                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                        or drag and drop files here
-                      </p>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Multiple files supported • Max 100MB per file
-                    </p>
-                  </div>
+                <div class="mt-2">
+                  <FileDropZone
+                    :bucket-name="bucketName"
+                    :current-path="currentPath"
+                    title="Upload Files"
+                    description="Drag and drop files here to add them to the upload list"
+                    :loading="isUploading"
+                    :upload-progress="uploadProgress"
+                    @files-selected="onModalFilesSelected"
+                    @create-file="openCreateFileFromUpload"
+                  />
                 </div>
 
                 <!-- Selected Files -->
@@ -730,31 +670,6 @@
                   </div>
                 </div>
 
-                <!-- Upload Progress -->
-                <div v-if="uploadProgress.length > 0" class="mt-4">
-                  <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                    Upload Progress
-                  </h4>
-                  <div class="space-y-2">
-                    <div
-                      v-for="progress in uploadProgress"
-                      :key="progress.fileName"
-                      class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3"
-                    >
-                      <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm text-gray-900 dark:text-white">{{ progress.fileName }}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ Math.round(progress.progress * 100) }}%</span>
-                      </div>
-                      <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                        <div
-                          class="bg-blue-600 h-2 rounded-full transition-all"
-                          :style="{ width: `${progress.progress * 100}%` }"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 <!-- Modal Actions -->
                 <div class="mt-6 sm:flex sm:flex-row-reverse gap-3">
                   <button
@@ -763,7 +678,11 @@
                     class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                   >
                     <ArrowPathIcon v-if="isUploading" class="animate-spin -ml-1 mr-2 h-4 w-4" />
-                    {{ isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'}` }}
+                    {{
+                      isUploading
+                        ? 'Uploading...'
+                        : `Upload ${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'}`
+                    }}
                   </button>
                   <button
                     @click="closeUploadModal"
@@ -792,11 +711,15 @@
           leave-from="opacity-100"
           leave-to="opacity-0"
         >
-          <div class="fixed inset-0 backdrop-blur-[2px] bg-white/5 dark:bg-black/5 transition-opacity" />
+          <div
+            class="fixed inset-0 backdrop-blur-[2px] bg-white/5 dark:bg-black/5 transition-opacity"
+          />
         </TransitionChild>
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
-          <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div
+            class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
+          >
             <TransitionChild
               as="template"
               enter=""
@@ -806,18 +729,26 @@
               leave-from="opacity-100 translate-y-0 sm:scale-100"
               leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl sm:p-6">
+              <DialogPanel
+                class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl sm:p-6"
+              >
                 <div>
-                  <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
+                  <div
+                    class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20"
+                  >
                     <DocumentTextIcon class="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div class="mt-3 text-center sm:mt-5">
-                    <DialogTitle as="h3" class="text-lg font-semibold leading-6 text-gray-900 dark:text-white">
+                    <DialogTitle
+                      as="h3"
+                      class="text-lg font-semibold leading-6 text-gray-900 dark:text-white"
+                    >
                       Create New File
                     </DialogTitle>
                     <div class="mt-2">
                       <p class="text-sm text-gray-500 dark:text-gray-400">
-                        Create a new file in <span class="font-medium">{{ bucketName }}</span>{{ currentPath ? `/${currentPath}` : '' }}
+                        Create a new file in <span class="font-medium">{{ bucketName }}</span
+                        >{{ currentPath ? `/${currentPath}` : '' }}
                       </p>
                     </div>
                   </div>
@@ -828,7 +759,10 @@
                   <div class="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-6 space-y-6">
                     <!-- Filename Input -->
                     <div class="space-y-2">
-                      <label for="fileName" class="flex items-center text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      <label
+                        for="fileName"
+                        class="flex items-center text-sm font-semibold text-gray-900 dark:text-gray-100"
+                      >
                         <DocumentTextIcon class="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
                         File Name
                       </label>
@@ -840,42 +774,81 @@
                           placeholder="example.json"
                           class="block w-full rounded-lg border-0 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-gray-100 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:focus:ring-blue-400 transition-all text-sm"
                           :class="{
-                            'ring-red-500 dark:ring-red-400': createFileValidationError && fileName.trim(),
-                            'ring-green-500 dark:ring-green-400': !createFileValidationError && fileName.trim()
+                            'ring-red-500 dark:ring-red-400':
+                              createFileValidationError && fileName.trim(),
+                            'ring-green-500 dark:ring-green-400':
+                              !createFileValidationError && fileName.trim(),
                           }"
                           @input="validateCreateFile"
                         />
-                        <div v-if="!createFileValidationError && fileName.trim()" class="absolute inset-y-0 right-0 flex items-center pr-3">
-                          <svg class="h-4 w-4 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <div
+                          v-if="!createFileValidationError && fileName.trim()"
+                          class="absolute inset-y-0 right-0 flex items-center pr-3"
+                        >
+                          <svg
+                            class="h-4 w-4 text-green-500 dark:text-green-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
                           </svg>
                         </div>
                       </div>
                       <!-- Auto-detected Content Type Display -->
-                      <div v-if="fileName.trim()" class="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                        <span>{{ getContentTypeLabel(autoDetectedContentType) }} will be auto-detected</span>
+                      <div
+                        v-if="fileName.trim()"
+                        class="flex items-center text-xs text-gray-500 dark:text-gray-400"
+                      >
+                        <span
+                          >{{ getContentTypeLabel(autoDetectedContentType) }} will be
+                          auto-detected</span
+                        >
                       </div>
                     </div>
 
                     <!-- Validation Error -->
-                    <div v-if="createFileValidationError" class="flex items-center justify-center bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                      <ExclamationTriangleIcon class="w-5 h-5 mr-2 text-red-600 dark:text-red-400" />
-                      <span class="text-sm font-medium text-red-700 dark:text-red-300">{{ createFileValidationError }}</span>
+                    <div
+                      v-if="createFileValidationError"
+                      class="flex items-center justify-center bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3"
+                    >
+                      <ExclamationTriangleIcon
+                        class="w-5 h-5 mr-2 text-red-600 dark:text-red-400"
+                      />
+                      <span class="text-sm font-medium text-red-700 dark:text-red-300">{{
+                        createFileValidationError
+                      }}</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Content Editor -->
                 <div class="mt-6">
-                  <label for="fileContent" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label
+                    for="fileContent"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
                     File Content
                   </label>
-                  <div class="relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div
+                    class="relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                  >
                     <div class="flex">
                       <!-- Line Numbers -->
-                      <div class="bg-gray-100 dark:bg-gray-800 px-3 py-4 border-r border-gray-200 dark:border-gray-700 select-none">
+                      <div
+                        class="bg-gray-100 dark:bg-gray-800 px-3 py-4 border-r border-gray-200 dark:border-gray-700 select-none"
+                      >
                         <div class="text-xs font-mono text-gray-500 dark:text-gray-400 leading-6">
-                          <div v-for="lineNum in Math.max(1, fileContent.split('\n').length)" :key="lineNum" class="h-6 text-right">
+                          <div
+                            v-for="lineNum in Math.max(1, fileContent.split('\n').length)"
+                            :key="lineNum"
+                            class="h-6 text-right"
+                          >
                             {{ lineNum }}
                           </div>
                         </div>
@@ -889,22 +862,36 @@
                           :class="{ 'bg-red-50 dark:bg-red-900/10': createFileValidationError }"
                           placeholder="Enter your file content here..."
                           spellcheck="false"
-                          style="line-height: 1.5rem;"
+                          style="line-height: 1.5rem"
                         ></textarea>
                       </div>
                     </div>
 
                     <!-- Status Bar -->
-                    <div class="bg-gray-100 dark:bg-gray-800 px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-                      <div class="flex justify-between items-center text-xs text-gray-600 dark:text-gray-400">
+                    <div
+                      class="bg-gray-100 dark:bg-gray-800 px-4 py-2 border-t border-gray-200 dark:border-gray-700"
+                    >
+                      <div
+                        class="flex justify-between items-center text-xs text-gray-600 dark:text-gray-400"
+                      >
                         <div class="flex items-center space-x-4">
                           <span>Lines: {{ Math.max(1, fileContent.split('\n').length) }}</span>
                           <span>Characters: {{ fileContent.length }}</span>
-                          <span>Type: {{ getFileExtension(fileName).toUpperCase() || 'Text' }}</span>
+                          <span
+                            >Type: {{ getFileExtension(fileName).toUpperCase() || 'Text' }}</span
+                          >
                         </div>
                         <div class="flex items-center space-x-2">
-                          <span v-if="!createFileValidationError && fileContent.trim()" class="text-green-600 dark:text-green-400">✓ Valid</span>
-                          <span v-else-if="createFileValidationError" class="text-red-600 dark:text-red-400">✗ Invalid</span>
+                          <span
+                            v-if="!createFileValidationError && fileContent.trim()"
+                            class="text-green-600 dark:text-green-400"
+                            >✓ Valid</span
+                          >
+                          <span
+                            v-else-if="createFileValidationError"
+                            class="text-red-600 dark:text-red-400"
+                            >✗ Invalid</span
+                          >
                           <span class="text-gray-500">{{ autoDetectedContentType }}</span>
                         </div>
                       </div>
@@ -949,11 +936,15 @@
           leave-from="opacity-100"
           leave-to="opacity-0"
         >
-          <div class="fixed inset-0 backdrop-blur-[2px] bg-white/5 dark:bg-black/5 transition-opacity" />
+          <div
+            class="fixed inset-0 backdrop-blur-[2px] bg-white/5 dark:bg-black/5 transition-opacity"
+          />
         </TransitionChild>
 
         <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div
+            class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
+          >
             <TransitionChild
               as="template"
               enter=""
@@ -963,19 +954,32 @@
               leave-from="opacity-100 translate-y-0 sm:scale-100"
               leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+              <DialogPanel
+                class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+              >
                 <div class="bg-white dark:bg-gray-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                   <div class="sm:flex sm:items-start">
-                    <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 sm:mx-0 sm:h-10 sm:w-10">
-                      <FolderPlusIcon class="h-6 w-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                    <div
+                      class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 sm:mx-0 sm:h-10 sm:w-10"
+                    >
+                      <FolderPlusIcon
+                        class="h-6 w-6 text-blue-600 dark:text-blue-400"
+                        aria-hidden="true"
+                      />
                     </div>
                     <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                      <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
+                      <DialogTitle
+                        as="h3"
+                        class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
+                      >
                         Create New Folder
                       </DialogTitle>
                       <div class="mt-4">
                         <div>
-                          <label for="folder-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <label
+                            for="folder-name"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                          >
                             Folder Name
                           </label>
                           <input
@@ -985,14 +989,28 @@
                             placeholder="Enter folder name..."
                             class="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:focus:ring-blue-400 transition-colors text-sm"
                             :class="{
-                              'border-red-500 dark:border-red-400 focus:ring-red-500 dark:focus:ring-red-400': createFolderValidationError,
-                              'focus:ring-blue-500 dark:focus:ring-blue-400': !createFolderValidationError
+                              'border-red-500 dark:border-red-400 focus:ring-red-500 dark:focus:ring-red-400':
+                                createFolderValidationError,
+                              'focus:ring-blue-500 dark:focus:ring-blue-400':
+                                !createFolderValidationError,
                             }"
                             @input="createFolderValidationError = ''"
+                            @keyup.enter="handleCreateFolder"
                           />
-                          <div v-if="createFolderValidationError" class="mt-2 flex items-center text-sm text-red-600 dark:text-red-400">
-                            <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                          <div
+                            v-if="createFolderValidationError"
+                            class="mt-2 flex items-center text-sm text-red-600 dark:text-red-400"
+                          >
+                            <svg
+                              class="w-4 h-4 mr-1 flex-shrink-0"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fill-rule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd"
+                              />
                             </svg>
                             {{ createFolderValidationError }}
                           </div>
@@ -1001,14 +1019,19 @@
                     </div>
                   </div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                <div
+                  class="bg-gray-50 dark:bg-gray-900 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
+                >
                   <button
                     type="button"
                     @click="handleCreateFolder"
                     :disabled="!folderName.trim() || storageStore.loading.upload"
                     class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3 sm:w-auto"
                   >
-                    <ArrowPathIcon v-if="storageStore.loading.upload" class="w-4 h-4 mr-2 animate-spin" />
+                    <ArrowPathIcon
+                      v-if="storageStore.loading.upload"
+                      class="w-4 h-4 mr-2 animate-spin"
+                    />
                     <FolderPlusIcon v-else class="w-4 h-4 mr-2" />
                     {{ storageStore.loading.upload ? 'Creating...' : 'Create Folder' }}
                   </button>
@@ -1034,62 +1057,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 // TypeScript declarations for webkit File System API
-declare global {
-  interface DataTransferItem {
-    webkitGetAsEntry(): FileSystemEntry | null
-  }
+// FileSystem types imported from utils or handled nicely
 
-  interface FileSystemEntry {
-    isFile: boolean
-    isDirectory: boolean
-    name: string
-  }
-
-  interface FileSystemFileEntry extends FileSystemEntry {
-    file(): void
-  }
-
-  interface FileSystemDirectoryEntry extends FileSystemEntry {
-    createReader(): FileSystemDirectoryReader
-  }
-
-  interface FileSystemDirectoryReader {
-    readEntries(): void
-  }
-
-  interface HTMLSelectElement extends HTMLElement {
-    value: string
-  }
-
-  interface Node {
-    contains(): boolean
-  }
-
-  interface DataTransferItemList {
-    length: number
-  }
-
-  interface FileList {
-    length: number
-  }
-
-  interface DataTransfer {
-    items: DataTransferItemList
-    files: FileList
-  }
-
-  interface Window {
-    DOMParser: {
-      new(): {
-        parseFromString(): {
-          getElementsByTagName(): {
-            length: number
-          }
-        }
-      }
-    }
-  }
-}
 import {
   ArchiveBoxIcon,
   ArrowLeftIcon,
@@ -1106,20 +1075,17 @@ import {
   FolderPlusIcon,
   TrashIcon,
   ExclamationTriangleIcon,
-  XMarkIcon
+  XMarkIcon,
+  LinkIcon,
 } from '@heroicons/vue/24/outline'
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  TransitionChild,
-  TransitionRoot
-} from '@headlessui/vue'
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { useStorageStore } from '@/stores/storage'
 import { useProjectsStore } from '@/stores/projects'
 import { useAppStore } from '@/stores/app'
 import storageApi from '@/api/storage'
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue'
+import FileDropZone from '@/components/storage/FileDropZone.vue'
+import { getFileExtension } from '@/utils/fileSystem'
 import type { StorageObjectWithPreview } from '@/types'
 
 const router = useRouter()
@@ -1133,12 +1099,10 @@ const deleteModal = ref<{
   objects: string[]
 }>({
   show: false,
-  objects: []
+  objects: [],
 })
 
 // Drag and drop state
-const isDragOver = ref(false)
-const fileInput = ref<HTMLInputElement | null>(null)
 const showUploadModal = ref(false)
 const showCreateFileModal = ref(false)
 const showCreateFolderModal = ref(false)
@@ -1147,7 +1111,6 @@ const downloadContext = ref<{ count: number; objects: string[] } | null>(null)
 
 // Upload modal state
 const selectedFiles = ref<File[]>([])
-const modalFileInput = ref<HTMLInputElement | null>(null)
 const isUploading = ref(false)
 const uploadProgress = ref<Array<{ fileName: string; progress: number }>>([])
 const appStore = useAppStore()
@@ -1164,23 +1127,35 @@ const createFolderValidationError = ref('')
 
 // Props from route
 const bucketName = computed(() => decodeURIComponent(route.params.bucketName as string))
-const currentProjectId = computed(() => route.params.projectId as string || projectsStore.selectedProjectId || 'Unknown')
+const currentProjectId = computed(
+  () => (route.params.projectId as string) || projectsStore.selectedProjectId || 'Unknown'
+)
 const currentPath = computed(() => storageStore.currentPath)
 
-
-
 // Computed
-const allObjectsSelected = computed(() => {
-  const nonFolderObjects = storageStore.objects.filter(obj => !obj.isFolder)
-  return nonFolderObjects.length > 0 && nonFolderObjects.every(obj => 
-    storageStore.selectedObjects.includes(obj.name)
-  )
+const allObjectsSelected = computed({
+  get: () => {
+    return (
+      storageStore.objects.length > 0 &&
+      storageStore.objects.every(obj =>
+        storageStore.selectedObjects.includes(obj.fullPath || obj.name)
+      )
+    )
+  },
+  set: (val: boolean) => {
+    if (val) {
+      storageStore.selectAllObjects()
+    } else {
+      storageStore.clearSelection()
+    }
+  },
 })
 
 const someObjectsSelected = computed(() => {
-  const nonFolderObjects = storageStore.objects.filter(obj => !obj.isFolder)
-  return storageStore.selectedObjects.length > 0 &&
-         storageStore.selectedObjects.length < nonFolderObjects.length
+  return (
+    storageStore.selectedObjects.length > 0 &&
+    storageStore.selectedObjects.length < storageStore.objects.length
+  )
 })
 
 // Auto-detect content type from file extension
@@ -1194,31 +1169,143 @@ async function refreshObjects(): Promise<void> {
   await storageStore.fetchObjects(bucketName.value, currentPath.value, true)
 }
 
+async function copyLinkToClipboard(): Promise<void> {
+  const selectedObjects = [...storageStore.selectedObjects]
+  if (selectedObjects.length !== 1) return
+
+  const objectName = selectedObjects[0]
+
+  // Check if it's a folder (folders end with /)
+  const isFolder = objectName.endsWith('/')
+
+  const urlToCopy = (() => {
+    if (isFolder) {
+      // Generate deep link to folder using the router to respect base/publicPath
+      const routeLocation = router.resolve({
+        path: `/projects/${currentProjectId.value}/storage/buckets/${encodeURIComponent(bucketName.value)}`,
+        query: {
+          path: objectName,
+          download: 'true',
+        },
+      })
+      return new URL(routeLocation.href, window.location.origin).toString()
+    } else {
+      // Use existing download URL for files
+      return storageApi.getObjectDownloadUrl(bucketName.value, objectName)
+    }
+  })()
+
+  try {
+    await navigator.clipboard.writeText(urlToCopy)
+    appStore.showToast({
+      type: 'success',
+      title: 'Link Copied',
+      message: isFolder ? 'Folder link copied to clipboard' : 'Download link copied to clipboard',
+    })
+  } catch (error: any) {
+    console.error('Failed to copy link:', error)
+    appStore.showToast({
+      type: 'error',
+      title: 'Copy Failed',
+      message: 'Failed to copy link to clipboard',
+    })
+  }
+}
 
 async function downloadSelectedAsZip(): Promise<void> {
-  const selectedObjects = [...storageStore.selectedObjects] // Create a copy to avoid reactivity issues
-  if (selectedObjects.length === 0) return
+  await downloadItemsAsZip([...storageStore.selectedObjects])
+}
+
+async function downloadItemsAsZip(items: string[]): Promise<void> {
+  if (items.length === 0) return
 
   try {
     downloadingZip.value = true
-    downloadContext.value = { count: selectedObjects.length, objects: selectedObjects }
+    downloadContext.value = { count: items.length, objects: items }
 
     // Add a small delay to ensure loading state is visible
     await new Promise(resolve => setTimeout(resolve, 500))
 
-    if (selectedObjects.length === 1) {
+    // Expand non-folders and folders
+    const filesToDownload: string[] = []
+
+    // Helper to list all files recursively in a folder
+    const listAllFiles = async (prefix: string): Promise<string[]> => {
+      const allFiles: string[] = []
+      let pageToken: string | undefined = undefined
+
+      do {
+        const response = await storageApi.listObjects({
+          bucket: bucketName.value,
+          prefix,
+          // No delimiter means recursive listing
+          maxResults: 1000,
+          pageToken,
+        })
+
+        if (response.items) {
+          // Add files, ignore the folder placeholder itself if it exists (0-byte object ending in /)
+          const fileNames = response.items
+            .filter(item => !item.name.endsWith('/'))
+            .map(item => item.name)
+          allFiles.push(...fileNames)
+        }
+
+        pageToken = response.nextPageToken
+      } while (pageToken)
+
+      return allFiles
+    }
+
+    // Process all items
+    for (const item of items) {
+      // Check if it's a folder in the current view
+      // We need to look up in the store because items only has the identifier
+      const obj = storageStore.objects.find(o => (o.fullPath || o.name) === item)
+
+      if (obj && obj.isFolder) {
+        // It is a folder, fetch all contents recursively
+        // Use fullPath which includes the trailing slash
+        const folderPath = obj.fullPath || obj.name
+        const folderFiles = await listAllFiles(folderPath)
+        filesToDownload.push(...folderFiles)
+      } else {
+        // It's a file (or we can't find it, assume file)
+        // Check if it ends in / just in case
+        if (item.endsWith('/')) {
+          const folderFiles = await listAllFiles(item)
+          filesToDownload.push(...folderFiles)
+        } else {
+          filesToDownload.push(item)
+        }
+      }
+    }
+
+    // Remove duplicates
+    const uniqueFiles = [...new Set(filesToDownload)]
+
+    if (uniqueFiles.length === 0) {
+      appStore.showToast({
+        type: 'warning',
+        title: 'No Files',
+        message: 'No actual files found to download.',
+      })
+      return
+    }
+
+    if (uniqueFiles.length === 1) {
       // Single file - download directly without zipping
-      const objectName = selectedObjects[0]
+      const objectName = uniqueFiles[0]
       const blob = await storageApi.downloadObject({
         bucket: bucketName.value,
-        object: objectName
+        object: objectName,
       })
 
       // Create download link and trigger download
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = objectName
+      link.download = objectName.split('/').pop() || objectName
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -1227,16 +1314,12 @@ async function downloadSelectedAsZip(): Promise<void> {
       appStore.showToast({
         type: 'success',
         title: 'Download Complete',
-        message: `Successfully downloaded "${objectName}"`
+        message: `Successfully downloaded "${objectName}"`,
       })
     } else {
       // Multiple files - create ZIP
-      const fileName = `${bucketName.value}-selected-${selectedObjects.length}-files.zip`
-      const zipBlob = await storageApi.downloadObjectsAsZip(
-        bucketName.value,
-        selectedObjects,
-        fileName
-      )
+      const fileName = `${bucketName.value}-selected-${uniqueFiles.length}-files.zip`
+      const zipBlob = await storageApi.downloadObjectsAsZip(bucketName.value, uniqueFiles)
 
       // Create download link and trigger download
       const url = URL.createObjectURL(zipBlob)
@@ -1251,16 +1334,15 @@ async function downloadSelectedAsZip(): Promise<void> {
       appStore.showToast({
         type: 'success',
         title: 'Download Complete',
-        message: `Successfully downloaded ${selectedObjects.length} selected files`
+        message: `Successfully downloaded ${uniqueFiles.length} files`,
       })
     }
-
   } catch (error: any) {
     console.error('Failed to download selected files:', error)
     appStore.showToast({
       type: 'error',
       title: 'Download Failed',
-      message: error.message || 'Failed to download file(s)'
+      message: error.message || 'Failed to download file(s)',
     })
   } finally {
     downloadingZip.value = false
@@ -1276,7 +1358,7 @@ function handleSort(field: 'name' | 'size' | 'type' | 'modified'): void {
     name: 'name',
     size: 'size',
     type: 'name', // For now, sort by name for type column
-    modified: 'modified'
+    modified: 'modified',
   }
 
   const storeField = sortFieldMap[field]
@@ -1290,7 +1372,7 @@ function handleMobileSortChange(event: Event): void {
   const sortFieldMap: Record<string, 'name' | 'size' | 'modified'> = {
     name: 'name',
     size: 'size',
-    modified: 'modified'
+    modified: 'modified',
   }
 
   const storeField = sortFieldMap[field] || 'name'
@@ -1302,25 +1384,38 @@ async function loadMore(): Promise<void> {
 }
 
 function navigateToPath(path: string): void {
+  storageStore.clearSelection()
   storageStore.fetchObjects(bucketName.value, path, true)
+
+  // Update URL query parameter
+  router.push({
+    query: {
+      ...route.query,
+      path: path || undefined,
+    },
+  })
 }
 
 function handleObjectClick(object: StorageObjectWithPreview): void {
   if (object.isFolder) {
-    const newPath = `${currentPath.value + object.name}/`
+    // Prefer fullPath which includes the trailing slash
+    if (object.fullPath) {
+      navigateToPath(object.fullPath)
+      return
+    }
+
+    // Fallback: manually construct path ensuring trailing slash
+    // object.name is relative name without slash
+    const folderName = object.name
+    const parentPath = currentPath.value || ''
+    const newPath = `${parentPath}${folderName}/`
     navigateToPath(newPath)
   } else {
     // Navigate to object details using fullPath if available, otherwise use name
     const objectPath = encodeURIComponent(object.fullPath || object.name)
-    router.push(`/projects/${currentProjectId.value}/storage/buckets/${encodeURIComponent(bucketName.value)}/objects/${objectPath}`)
-  }
-}
-
-function toggleSelectAll(): void {
-  if (allObjectsSelected.value) {
-    storageStore.clearSelection()
-  } else {
-    storageStore.selectAllObjects()
+    router.push(
+      `/projects/${currentProjectId.value}/storage/buckets/${encodeURIComponent(bucketName.value)}/objects/${objectPath}`
+    )
   }
 }
 
@@ -1329,11 +1424,10 @@ async function downloadObject(object: StorageObjectWithPreview): Promise<void> {
   await storageStore.downloadObject(bucketName.value, object.name)
 }
 
-
 function confirmBulkDelete(): void {
   deleteModal.value = {
     show: true,
-    objects: [...storageStore.selectedObjects]
+    objects: [...storageStore.selectedObjects],
   }
 }
 
@@ -1349,7 +1443,7 @@ async function handleBulkDelete(): Promise<void> {
 function cancelDelete(): void {
   deleteModal.value = {
     show: false,
-    objects: []
+    objects: [],
   }
 }
 
@@ -1378,35 +1472,13 @@ function formatDate(dateString?: string): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
   })
 }
 
 // Upload modal functions
-function handleModalFileSelect(event: Event): void {
-  const target = event.target as HTMLInputElement
-  const files = target.files
-  if (files) {
-    selectedFiles.value = [...selectedFiles.value, ...Array.from(files)]
-  }
-}
-
-async function handleModalDrop(event: DragEvent): Promise<void> {
-  isDragOver.value = false
-
-  try {
-    const files = await getFilesFromDataTransfer(event.dataTransfer!)
-    if (files.length > 0) {
-      selectedFiles.value = [...selectedFiles.value, ...files]
-    }
-  } catch (error) {
-    console.error('Error processing dropped files/folders in modal:', error)
-    appStore.showToast({
-      type: 'error',
-      title: 'Upload Error',
-      message: 'Failed to process dropped files or folders'
-    })
-  }
+function onModalFilesSelected(files: File[]): void {
+  selectedFiles.value = [...selectedFiles.value, ...files]
 }
 
 function removeFile(index: number): void {
@@ -1420,7 +1492,7 @@ async function handleUpload(): Promise<void> {
     isUploading.value = true
     uploadProgress.value = selectedFiles.value.map(file => ({
       fileName: file.name,
-      progress: 0
+      progress: 0,
     }))
 
     // Upload all files at once (uploadFiles handles success toast and refresh)
@@ -1433,13 +1505,12 @@ async function handleUpload(): Promise<void> {
 
     // Close modal (uploadFiles already shows success toast and refreshes objects)
     closeUploadModal()
-
   } catch (error: any) {
     console.error('Upload failed:', error)
     appStore.showToast({
       type: 'error',
       title: 'Upload Failed',
-      message: error.message || 'Failed to upload files'
+      message: error.message || 'Failed to upload files',
     })
   } finally {
     isUploading.value = false
@@ -1457,10 +1528,12 @@ function closeUploadModal(): void {
   showUploadModal.value = false
   selectedFiles.value = []
   uploadProgress.value = []
-  isDragOver.value = false
-  if (modalFileInput.value) {
-    modalFileInput.value.value = ''
-  }
+  // isDragOver and modalFileInput are removed
+}
+
+function openCreateFileFromUpload(): void {
+  showUploadModal.value = false
+  showCreateFileModal.value = true
 }
 
 // Handle ESC key for upload modal
@@ -1472,48 +1545,41 @@ const handleUploadModalEscKey = (event: KeyboardEvent) => {
   }
 }
 
-// Create file functions
-function getFileExtension(filename: string): string {
-  if (!filename) return ''
-  return filename.split('.').pop()?.toLowerCase() || ''
-}
-
 function getContentTypeFromExtension(filename: string): string {
   const extension = getFileExtension(filename)
   const contentTypeMap: Record<string, string> = {
-    'json': 'application/json',
-    'xml': 'application/xml',
-    'yaml': 'application/yaml',
-    'yml': 'application/yaml',
-    'html': 'text/html',
-    'htm': 'text/html',
-    'css': 'text/css',
-    'js': 'text/javascript',
-    'mjs': 'text/javascript',
-    'ts': 'text/typescript',
-    'tsx': 'text/typescript',
-    'jsx': 'text/javascript',
-    'md': 'text/markdown',
-    'csv': 'text/csv',
-    'txt': 'text/plain',
-    'log': 'text/plain',
-    'conf': 'text/plain',
-    'ini': 'text/plain',
-    'sh': 'text/x-shellscript',
-    'py': 'text/x-python',
-    'rb': 'text/x-ruby',
-    'php': 'text/x-php',
-    'go': 'text/x-go',
-    'java': 'text/x-java-source',
-    'c': 'text/x-csrc',
-    'cpp': 'text/x-c++src',
-    'h': 'text/x-chdr',
-    'hpp': 'text/x-c++hdr'
+    json: 'application/json',
+    xml: 'application/xml',
+    yaml: 'application/yaml',
+    yml: 'application/yaml',
+    html: 'text/html',
+    htm: 'text/html',
+    css: 'text/css',
+    js: 'text/javascript',
+    mjs: 'text/javascript',
+    ts: 'text/typescript',
+    tsx: 'text/typescript',
+    jsx: 'text/javascript',
+    md: 'text/markdown',
+    csv: 'text/csv',
+    txt: 'text/plain',
+    log: 'text/plain',
+    conf: 'text/plain',
+    ini: 'text/plain',
+    sh: 'text/x-shellscript',
+    py: 'text/x-python',
+    rb: 'text/x-ruby',
+    php: 'text/x-php',
+    go: 'text/x-go',
+    java: 'text/x-java-source',
+    c: 'text/x-csrc',
+    cpp: 'text/x-c++src',
+    h: 'text/x-chdr',
+    hpp: 'text/x-c++hdr',
   }
 
   return contentTypeMap[extension] || 'text/plain'
 }
-
 
 function getContentTypeLabel(contentType: string): string {
   const labelMap: Record<string, string> = {
@@ -1534,7 +1600,7 @@ function getContentTypeLabel(contentType: string): string {
     'text/x-java-source': 'Java',
     'text/x-csrc': 'C Source',
     'text/x-c++src': 'C++ Source',
-    'text/plain': 'Plain Text'
+    'text/plain': 'Plain Text',
   }
 
   return labelMap[contentType] || 'Plain Text'
@@ -1588,12 +1654,12 @@ async function handleCreateFile(): Promise<void> {
 
     // Create file content as blob
     const blob = new Blob([fileContent.value], {
-      type: detectedContentType
+      type: detectedContentType,
     })
 
     // Create File object
     const file = new File([blob], fileName.value, {
-      type: detectedContentType
+      type: detectedContentType,
     })
 
     // Upload the file using uploadFiles
@@ -1601,13 +1667,12 @@ async function handleCreateFile(): Promise<void> {
 
     // Close modal (uploadFiles already shows success toast and refreshes objects)
     closeCreateFileModal()
-
   } catch (error: any) {
     console.error('Create file failed:', error)
     appStore.showToast({
       type: 'error',
       title: 'Create Failed',
-      message: error.message || 'Failed to create file'
+      message: error.message || 'Failed to create file',
     })
   } finally {
     isCreatingFile.value = false
@@ -1647,7 +1712,9 @@ async function handleCreateFolder(): Promise<void> {
 
   try {
     // Create folder by uploading a placeholder file
-    const folderPath = currentPath.value ? `${currentPath.value}${folderName.value.trim()}/` : `${folderName.value.trim()}/`
+    const folderPath = currentPath.value
+      ? `${currentPath.value}${folderName.value.trim()}/`
+      : `${folderName.value.trim()}/`
     const placeholderFileName = '.keep'
 
     // Create a placeholder file to represent the folder
@@ -1661,153 +1728,20 @@ async function handleCreateFolder(): Promise<void> {
     appStore.showToast({
       type: 'success',
       title: 'Folder created',
-      message: `Folder "${folderName.value}" has been created successfully`
+      message: `Folder "${folderName.value}" has been created successfully`,
     })
 
     closeCreateFolderModal()
   } catch (error) {
     console.error('Error creating folder:', error)
-    createFolderValidationError.value = error instanceof Error ? error.message : 'Failed to create folder'
+    createFolderValidationError.value =
+      error instanceof Error ? error.message : 'Failed to create folder'
 
     appStore.showToast({
       type: 'error',
       title: 'Folder creation failed',
-      message: error instanceof Error ? error.message : 'Failed to create folder'
+      message: error instanceof Error ? error.message : 'Failed to create folder',
     })
-  }
-}
-
-// Drag and drop functions
-function handleDragOver(event: DragEvent): void {
-  event.preventDefault()
-  isDragOver.value = true
-}
-
-function handleDragEnter(event: DragEvent): void {
-  event.preventDefault()
-  isDragOver.value = true
-}
-
-function handleDragLeave(event: DragEvent): void {
-  event.preventDefault()
-  // Only set isDragOver to false if we're actually leaving the drop zone
-  if (!event.currentTarget?.contains(event.relatedTarget as any)) {
-    isDragOver.value = false
-  }
-}
-
-// Helper function to read directory entries recursively
-async function readDirectoryEntries(directoryEntry: any, path = ''): Promise<File[]> {
-  return new Promise((resolve, reject) => {
-    const reader = directoryEntry.createReader()
-    const allFiles: File[] = []
-
-    const readEntries = () => {
-      reader.readEntries(async (entries) => {
-        if (entries.length === 0) {
-          resolve(allFiles)
-          return
-        }
-
-        const promises = entries.map(async (entry) => {
-          const currentPath = path ? `${path}/${entry.name}` : entry.name
-
-          if (entry.isFile) {
-            return new Promise<File>((fileResolve, fileReject) => {
-              (entry as any).file((file: any) => {
-                // Create a new File with the full path
-                const fileWithPath = new File([file], currentPath, { type: file.type })
-                fileResolve(fileWithPath)
-              }, fileReject)
-            })
-          } else if (entry.isDirectory) {
-            return readDirectoryEntries(entry as any, currentPath)
-          }
-          return []
-        })
-
-        try {
-          const results = await Promise.all(promises)
-          results.forEach(result => {
-            if (Array.isArray(result)) {
-              allFiles.push(...result)
-            } else if (result) {
-              allFiles.push(result)
-            }
-          })
-          readEntries() // Continue reading more entries
-        } catch (error) {
-          reject(error)
-        }
-      }, reject)
-    }
-
-    readEntries()
-  })
-}
-
-// Helper function to get all files from DataTransferItems (supports both files and folders)
-async function getFilesFromDataTransfer(dataTransfer: any): Promise<File[]> {
-  const allFiles: File[] = []
-
-  if (dataTransfer.items) {
-    // Use DataTransferItems API for folder support
-    const items = Array.from(dataTransfer.items)
-
-    for (const item of items) {
-      if (item.kind === 'file') {
-        const entry = item.webkitGetAsEntry()
-
-        if (entry?.isFile) {
-          const file = item.getAsFile()
-          if (file) {
-            allFiles.push(file)
-          }
-        } else if (entry?.isDirectory) {
-          // Include the root folder name in the path
-          const directoryFiles = await readDirectoryEntries(entry as any, entry.name)
-          allFiles.push(...directoryFiles)
-        }
-      }
-    }
-  } else {
-    // Fallback to files API (files only, no folders)
-    allFiles.push(...Array.from(dataTransfer.files))
-  }
-
-  return allFiles
-}
-
-async function handleDrop(event: DragEvent): Promise<void> {
-  event.preventDefault()
-  isDragOver.value = false
-
-  try {
-    const files = await getFilesFromDataTransfer(event.dataTransfer!)
-    if (files.length > 0) {
-      await uploadFiles(files)
-    }
-  } catch (error) {
-    console.error('Error processing dropped files/folders:', error)
-    appStore.showToast({
-      type: 'error',
-      title: 'Upload Error',
-      message: 'Failed to process dropped files or folders'
-    })
-  }
-}
-
-function triggerFileInput(): void {
-  fileInput.value?.click()
-}
-
-async function handleFileSelect(event: Event): Promise<void> {
-  const target = event.target as HTMLInputElement
-  const files = Array.from(target.files || [])
-  if (files.length > 0) {
-    await uploadFiles(files)
-    // Clear the input so the same files can be selected again
-    target.value = ''
   }
 }
 
@@ -1831,14 +1765,26 @@ onMounted(async () => {
       await storageStore.fetchBucket(bucketName.value)
 
       // Check if we're switching to a different bucket
-      if (storageStore.currentBucket?.name && storageStore.currentBucket.name !== bucketName.value) {
+      if (
+        storageStore.currentBucket?.name &&
+        storageStore.currentBucket.name !== bucketName.value
+      ) {
         // Clear path when switching buckets
         storageStore.clearCurrentPath()
       }
 
-      // Use existing currentPath from store, or default to root if none exists
-      const pathToLoad = storageStore.currentPath || ''
+      // Use existing currentPath from store, or check query param, or default to root
+      const queryPath = route.query.path as string
+      const pathToLoad = queryPath || storageStore.currentPath || ''
       await storageStore.fetchObjects(bucketName.value, pathToLoad, true)
+
+      // Handle deep link download
+      if (route.query.download === 'true' && queryPath) {
+        // Automatically start download for the specified path
+        // Ensure it ends with / so it's treated as a folder if it is one
+        const path = queryPath.endsWith('/') ? queryPath : `${queryPath}/`
+        await downloadItemsAsZip([path])
+      }
     } catch (error) {
       console.error('Error loading bucket:', error)
     }

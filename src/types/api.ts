@@ -64,27 +64,27 @@ export interface ApiEndpoints {
   // Projects
   getProjects: string
   getProject: Function
-  
+
   // Topics
   getTopics: Function
   getTopic: Function
   createTopic: Function
   deleteTopic: Function
   updateTopic: Function
-  
+
   // Subscriptions
   getSubscriptions: Function
   getSubscription: Function
   createSubscription: Function
   deleteSubscription: Function
   updateSubscription: Function
-  
+
   // Messages
   publishMessages: Function
   pullMessages: Function
   acknowledgeMessages: Function
   modifyAckDeadline: Function
-  
+
   // Schemas
   getSchemas: Function
   getSchema: Function
@@ -92,17 +92,12 @@ export interface ApiEndpoints {
   deleteSchema: Function
   validateSchema: Function
   validateMessage: Function
-  
+
   // Snapshots
   getSnapshots: Function
   createSnapshot: Function
   deleteSnapshot: Function
-  
-  // Monitoring & Metrics
-  getTopicMetrics: Function
-  getSubscriptionMetrics: Function
-  getProjectMetrics: Function
-  
+
   // Admin operations
   getIamPolicy: Function
   setIamPolicy: Function
@@ -202,7 +197,6 @@ export interface RequestTracker {
 export interface FeatureFlags {
   enableBatchOperations: boolean
   enableRealtimeUpdates: boolean
-  enableAdvancedMetrics: boolean
   enableSchemaValidation: boolean
   enableDeadLetterQueues: boolean
   maxConcurrentRequests: number
@@ -217,14 +211,14 @@ export interface ApiClient {
   put: Function
   patch: Function
   delete: Function
-  
+
   // Batch operations
   batch: Function
-  
+
   // Configuration
   configure: Function
   setAuth: Function
-  
+
   // Request tracking
   getRequestHistory(): RequestTracker[]
   clearRequestHistory(): void
@@ -236,15 +230,6 @@ export interface MockApiConfig {
   delay: number
   failureRate: number
   dataPath: string
-}
-
-export interface MockData {
-  projects: any[]
-  topics: any[]
-  subscriptions: any[]
-  schemas: any[]
-  messages: any[]
-  metrics: any[]
 }
 
 // API validation

@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '.github/**'
+      - README.md
+      - LICENSE
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+
+    - name: Install dependencies
+      run: bun install
+
+    - name: Run tests with coverage
+      continue-on-error: true
+      run: bun run test:coverage
+
+    - name: Generate test summary
+      run: |
+        printf "# Vitest Test Summary\n" > vitest-summary.md
+        printf "| Total Suites | Passed Suites | Failed Suites | Pending Suites | Total Tests | Passed Tests | Failed Tests | Pending Tests | Success |\n" >> vitest-summary.md
+        printf "|--------------|--------------|---------------|---------------|-------------|--------------|--------------|--------------|--------|\n" >> vitest-summary.md
+        jq -r '"| " + (.numTotalTestSuites|tostring) + " | " + (.numPassedTestSuites|tostring) + " | " + (.numFailedTestSuites|tostring) + " | " + (.numPendingTestSuites|tostring) + " | " + (.numTotalTests|tostring) + " | " + (.numPassedTests|tostring) + " | " + (.numFailedTests|tostring) + " | " + (.numPendingTests|tostring) + " | " + (if .success then "✅" else "❌" end) + " |"' tests-report.json >> vitest-summary.md
+
+        failed_count=$(jq '[.testResults[].assertionResults[] | select(.status=="failed")] | length' tests-report.json)
+        if [ "$failed_count" -gt 0 ]; then
+          printf "\n## Failed Tests\n" >> vitest-summary.md
+          printf "\n\`\`\`json\n" >> vitest-summary.md
+          jq -r '.testResults[].assertionResults[] | select(.status=="failed")' tests-report.json >> vitest-summary.md
+          printf "\n\`\`\`\n" >> vitest-summary.md
+        fi
+
+    - name: Save PR number
+      run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
+
+    - name: Upload test summary artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-summary
+        path: |
+          vitest-summary.md
+          pr-number.txt
+        retention-days: 1
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: ./coverage/lcov.info
+        fail_ci_if_error: false
+        verbose: true
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage-report
+        path: coverage/
+        retention-days: 7
+
+    - name: Fail if tests failed
+      run: |
+        if [ $(jq '.numFailedTests' tests-report.json) -gt 0 ]; then
+          echo "Tests failed. Failing job."
+          exit 1
+        fi

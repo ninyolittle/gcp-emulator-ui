@@ -20,7 +20,7 @@ export function setupApiClient() {
 
   // Request interceptor
   apiClient.interceptors.request.use(
-    (config) => {
+    config => {
       const token = localStorage.getItem('auth-token')
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
@@ -31,7 +31,7 @@ export function setupApiClient() {
 
       return config
     },
-    (error) => {
+    error => {
       console.error('Request interceptor error:', error)
       return Promise.reject(error)
     }
@@ -42,16 +42,17 @@ export function setupApiClient() {
     (response: AxiosResponse<ApiResponse>) => {
       return response
     },
-    (error) => {
+    error => {
       // Handle different error types
       if (error.response) {
         // Server responded with error status
         const apiError: ApiError = {
           code: error.response.status,
-          message: error.response.data?.message || error.message,
+          message:
+            error.response.data?.error?.message || error.response.data?.message || error.message,
           details: error.response.data?.details || [],
           timestamp: new Date(),
-          requestId: error.config?.headers?.['X-Request-ID']
+          requestId: error.config?.headers?.['X-Request-ID'],
         }
 
         console.error('API Error:', apiError)
@@ -84,10 +85,10 @@ export function setupApiClient() {
           code: 0,
           message: 'Network error - please check your connection',
           details: [],
-          timestamp: new Date()
+          timestamp: new Date(),
         }
 
-        console.error('Network error:', networkError)
+        console.debug('Network error:', networkError)
         return Promise.reject(networkError)
       } else {
         // Other error
@@ -95,10 +96,10 @@ export function setupApiClient() {
           code: -1,
           message: error.message || 'Unknown error occurred',
           details: [],
-          timestamp: new Date()
+          timestamp: new Date(),
         }
 
-        console.error('Unknown error:', unknownError)
+        console.debug('Unknown error:', unknownError)
         return Promise.reject(unknownError)
       }
     }
@@ -119,17 +120,21 @@ export function getApiClient(): AxiosInstance {
 /**
  * Create a request with custom timeout for long-running operations
  */
-export function createLongRunningRequest(timeoutMs: number = 300000) { // 5 minute default
+export function createLongRunningRequest(timeoutMs: number = 300000) {
+  // 5 minute default
   if (!apiClient) {
     throw new Error('API client not initialized. Call setupApiClient() first.')
   }
 
   return {
     get: (url: string, config = {}) => apiClient.get(url, { ...config, timeout: timeoutMs }),
-    post: (url: string, data?: any, config = {}) => apiClient.post(url, data, { ...config, timeout: timeoutMs }),
-    put: (url: string, data?: any, config = {}) => apiClient.put(url, data, { ...config, timeout: timeoutMs }),
+    post: (url: string, data?: any, config = {}) =>
+      apiClient.post(url, data, { ...config, timeout: timeoutMs }),
+    put: (url: string, data?: any, config = {}) =>
+      apiClient.put(url, data, { ...config, timeout: timeoutMs }),
     delete: (url: string, config = {}) => apiClient.delete(url, { ...config, timeout: timeoutMs }),
-    patch: (url: string, data?: any, config = {}) => apiClient.patch(url, data, { ...config, timeout: timeoutMs })
+    patch: (url: string, data?: any, config = {}) =>
+      apiClient.patch(url, data, { ...config, timeout: timeoutMs }),
   }
 }
 

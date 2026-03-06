@@ -15,11 +15,12 @@ const firestoreClient = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+    Authorization: 'Bearer owner',
   },
 })
 
 // Handle URL encoding for (default) database name
-firestoreClient.interceptors.request.use((config) => {
+firestoreClient.interceptors.request.use(config => {
   if (config.url) {
     config.url = config.url.replace(/\(default\)/g, '%28default%29')
   }
@@ -34,17 +35,21 @@ export const firestoreApi = {
     if (documentId) {
       // Create document with specific ID using POST with documentId parameter
       const path = `/v1/${parent}/documents/${collectionId}`
-      const response = await firestoreClient.post(path, {
-        fields: document.fields
-      }, {
-        params: { documentId }
-      })
+      const response = await firestoreClient.post(
+        path,
+        {
+          fields: document.fields,
+        },
+        {
+          params: { documentId },
+        }
+      )
       return response.data
     } else {
       // Auto-generate document ID - use POST without documentId
       const path = `/v1/${parent}/documents/${collectionId}`
       const response = await firestoreClient.post(path, {
-        fields: document.fields
+        fields: document.fields,
       })
       return response.data
     }
@@ -60,66 +65,105 @@ export const firestoreApi = {
     if (documentId) {
       // Create document with specific ID using POST with documentId parameter
       const path = `/v1/${parentDocumentPath}/${collectionId}`
-      const response = await firestoreClient.post(path, {
-        fields: document.fields
-      }, {
-        params: { documentId }
-      })
+      const response = await firestoreClient.post(
+        path,
+        {
+          fields: document.fields,
+        },
+        {
+          params: { documentId },
+        }
+      )
       return response.data
     } else {
       // Auto-generate document ID - use POST without documentId
       const path = `/v1/${parentDocumentPath}/${collectionId}`
       const response = await firestoreClient.post(path, {
-        fields: document.fields
+        fields: document.fields,
       })
       return response.data
     }
   },
 
-  // List documents in a collection
-  async listDocuments(parent: string, collectionId: string): Promise<ListDocumentsResponse> {
-    const response = await firestoreClient.get(`/v1/${parent}/documents/${collectionId}`)
-    return {
-      documents: response.data.documents || [],
-      nextPageToken: response.data.nextPageToken
+  // Helper to fetch documents
+  async fetchDocuments(
+    path: string,
+    pageSize: number,
+    pageToken?: string
+  ): Promise<ListDocumentsResponse> {
+    const params: any = { pageSize }
+    if (pageToken) {
+      params.pageToken = pageToken
     }
+
+    const response = await firestoreClient.get(path, { params })
+
+    const result: ListDocumentsResponse = {
+      documents: response.data.documents || [],
+    }
+    if (response.data.nextPageToken) {
+      result.nextPageToken = response.data.nextPageToken
+    }
+    return result
+  },
+
+  // List documents in a collection
+  async listDocuments(
+    parent: string,
+    collectionId: string,
+    pageSize: number = 30,
+    pageToken?: string
+  ): Promise<ListDocumentsResponse> {
+    return this.fetchDocuments(`/v1/${parent}/documents/${collectionId}`, pageSize, pageToken)
   },
 
   // List documents in a subcollection
-  async listSubcollectionDocuments(parentDocumentPath: string, collectionId: string): Promise<ListDocumentsResponse> {
-    const response = await firestoreClient.get(`/v1/${parentDocumentPath}/${collectionId}`)
-    return {
-      documents: response.data.documents || [],
-      nextPageToken: response.data.nextPageToken
-    }
+  async listSubcollectionDocuments(
+    parentDocumentPath: string,
+    collectionId: string,
+    pageSize: number = 30,
+    pageToken?: string
+  ): Promise<ListDocumentsResponse> {
+    return this.fetchDocuments(`/v1/${parentDocumentPath}/${collectionId}`, pageSize, pageToken)
   },
 
-  // Discover collections by listing all documents
-  async listCollections(parent: string): Promise<ListCollectionsResponse> {
+  // Discover collections by listing collection IDs
+  async listCollections(
+    parent: string,
+    pageSize?: number,
+    pageToken?: string
+  ): Promise<ListCollectionsResponse> {
     try {
-      // List all documents at root to discover collections
-      const response = await firestoreClient.get(`/v1/${parent}/documents/`)
-      const documents = response.data.documents || []
+      // The :listCollectionIds endpoint must be called on the parent document.
+      // For root collections, the parent is ".../databases/{db}/documents".
+      // If 'parent' is just ".../databases/{db}", we must append "/documents".
+      const target = parent.endsWith('/documents') ? parent : `${parent}/documents`
 
-      // Extract unique collection names
-      const collectionNames = new Set<string>()
-      documents.forEach((doc: any) => {
-        const pathParts = doc.name.split('/')
-        const documentsIndex = pathParts.indexOf('documents')
-        if (documentsIndex !== -1 && pathParts.length > documentsIndex + 1) {
-          collectionNames.add(pathParts[documentsIndex + 1])
-        }
-      })
+      // Only include pageSize and pageToken in request body if provided
+      const requestBody: { pageSize?: number; pageToken?: string } = {}
+      if (pageSize !== undefined) {
+        requestBody.pageSize = pageSize
+      }
+      if (pageToken !== undefined) {
+        requestBody.pageToken = pageToken
+      }
 
-      const collections = Array.from(collectionNames).map(name => ({
-        name: `${parent}/documents/${name}`,
-        collectionId: name
+      const response = await firestoreClient.post(`/v1/${target}:listCollectionIds`, requestBody)
+
+      const collectionIds = response.data.collectionIds || []
+      const collections = collectionIds.map((id: string) => ({
+        id,
+        path: `${target}/${id}`, // Use target for consistency with API path
+        name: `${target}/${id}`,
       }))
 
-      return { collections, nextPageToken: undefined }
+      return {
+        collections,
+        nextPageToken: response.data.nextPageToken,
+      }
     } catch (error) {
-      console.warn('Failed to discover collections:', error)
-      return { collections: [], nextPageToken: undefined }
+      console.warn('Failed to list collections:', error)
+      return { collections: [] }
     }
   },
 
@@ -136,25 +180,25 @@ export const firestoreApi = {
       // Extract unique subcollection names from the nested document paths
       const subcollectionNames = new Set<string>()
       documents.forEach((doc: any) => {
-        const pathParts = doc.name.split('/')
+        const pathParts: string[] = doc.name.split('/')
         // Find the index of our document in the path
-        const documentIndex = pathParts.findIndex(part => documentPath.endsWith(part))
+        const documentIndex = pathParts.findIndex((part: string) => documentPath.endsWith(part))
         // The next part after our document would be a subcollection
         if (documentIndex !== -1 && pathParts.length > documentIndex + 1) {
-          subcollectionNames.add(pathParts[documentIndex + 1])
+          subcollectionNames.add(pathParts[documentIndex + 1]!)
         }
       })
 
       const collections = Array.from(subcollectionNames).map(name => ({
         name: `${documentPath}/${name}`,
         id: name,
-        path: `${documentPath}/${name}`
+        path: `${documentPath}/${name}`,
       }))
 
-      return { collections, nextPageToken: undefined }
+      return { collections }
     } catch (error) {
       console.warn('Failed to list subcollections for document:', documentPath, error)
-      return { collections: [], nextPageToken: undefined }
+      return { collections: [] }
     }
   },
 
@@ -215,7 +259,7 @@ export const firestoreApi = {
       const databasePath = `projects/${projectId}/databases/${databaseId}`
       const response = await firestoreClient.get(`/v1/${databasePath}/documents/`, {
         timeout: 3000,
-        validateStatus: (status) => status === 200 || status === 404
+        validateStatus: status => status === 200 || status === 404,
       })
       return response.status === 200 || response.status === 404
     } catch {
@@ -232,8 +276,7 @@ export const firestoreApi = {
   // Helper to get custom database path
   getDatabasePath(projectId: string, databaseId: string): string {
     return `projects/${projectId}/databases/${databaseId}`
-  }
+  },
 }
-
 
 export default firestoreApi

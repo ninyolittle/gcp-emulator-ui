@@ -14,7 +14,7 @@ import type {
   PullResponse,
   CreateTopicRequest,
   CreateSubscriptionRequest,
-  CreateSchemaRequest
+  CreateSchemaRequest,
 } from '@/types/pubsub'
 
 const getApi = () => getApiClient()
@@ -76,7 +76,7 @@ export const projectsApi = {
       'demo-project',
       'pubsub-test',
       'my-project',
-      'emulator-project'
+      'emulator-project',
     ]
 
     const discoveredProjects: string[] = []
@@ -92,7 +92,7 @@ export const projectsApi = {
     }
 
     return discoveredProjects
-  }
+  },
 }
 
 // Topics API
@@ -128,13 +128,17 @@ export const topicsApi = {
       schemaSettings: request.schemaSettings,
       createdAt: new Date().toISOString(),
       messageCount: 0,
-      subscriptionsCount: 0
+      subscriptionsCount: 0,
     }
 
     return enhancedTopic
   },
 
-  async updateTopic(projectId: string, topicName: string, updateData: Partial<Topic>): Promise<Topic> {
+  async updateTopic(
+    projectId: string,
+    topicName: string,
+    updateData: Partial<Topic>
+  ): Promise<Topic> {
     const topicPath = `projects/${projectId}/topics/${topicName}`
 
     // For the emulator, we can't actually update topic properties, but we'll simulate it
@@ -150,7 +154,7 @@ export const topicsApi = {
       messageRetentionDuration: updateData.messageRetentionDuration || '7d',
       messageCount: updateData.messageCount || 0,
       subscriptionsCount: updateData.subscriptionsCount || 0,
-      ...(updateData.schemaSettings && { schemaSettings: updateData.schemaSettings })
+      ...(updateData.schemaSettings && { schemaSettings: updateData.schemaSettings }),
     }
 
     return enhancedTopic
@@ -161,26 +165,34 @@ export const topicsApi = {
     await api.delete(`/v1/projects/${projectId}/topics/${topicName}`)
   },
 
-  async publishMessages(projectId: string, topicName: string, request: PublishRequest): Promise<PublishResponse> {
+  async publishMessages(
+    projectId: string,
+    topicName: string,
+    request: PublishRequest
+  ): Promise<PublishResponse> {
     const api = getApi()
-    const response = await api.post(`/v1/projects/${projectId}/topics/${topicName}:publish`, request)
+    const response = await api.post(
+      `/v1/projects/${projectId}/topics/${topicName}:publish`,
+      request
+    )
     return response.data
   },
 
-  async publishMessage(projectId: string, topicName: string, message: { data: string, attributes?: Record<string, string> }): Promise<PublishResponse> {
+  async publishMessage(
+    projectId: string,
+    topicName: string,
+    message: { data: string; attributes?: Record<string, string> }
+  ): Promise<PublishResponse> {
     const api = getApi()
     const request: PublishRequest = {
-      messages: [message]
+      messages: [message],
     }
-    const response = await api.post(`/v1/projects/${projectId}/topics/${topicName}:publish`, request)
+    const response = await api.post(
+      `/v1/projects/${projectId}/topics/${topicName}:publish`,
+      request
+    )
     return response.data
   },
-
-  async getTopicMetrics(projectId: string, topicName: string): Promise<any> {
-    const api = getApi()
-    const response = await api.get(`/v1/projects/${projectId}/topics/${topicName}/metrics`)
-    return response.data
-  }
 }
 
 // Subscriptions API
@@ -212,7 +224,10 @@ export const subscriptionsApi = {
     return response.data
   },
 
-  async createSubscription(projectId: string, request: CreateSubscriptionRequest): Promise<Subscription> {
+  async createSubscription(
+    projectId: string,
+    request: CreateSubscriptionRequest
+  ): Promise<Subscription> {
     const api = getApi()
     // Use PUT with subscription name in path, as per Google Cloud Pub/Sub API spec
     const subscriptionName = request.name
@@ -243,6 +258,7 @@ export const subscriptionsApi = {
       retainAckedMessages: request.retainAckedMessages || false,
       messageRetentionDuration: request.messageRetentionDuration || '604800s',
       enableMessageOrdering: request.enableMessageOrdering || false,
+      filter: request.filter ?? response.data.filter,
       detached: false,
       labels: request.labels || {},
       pushConfig: request.pushConfig,
@@ -250,13 +266,17 @@ export const subscriptionsApi = {
       deadLetterPolicy: request.deadLetterPolicy,
       retryPolicy: request.retryPolicy,
       messageCount: 0,
-      undeliveredMessageCount: 0
+      undeliveredMessageCount: 0,
     }
 
     return enhancedSubscription
   },
 
-  async updateSubscription(projectId: string, subscriptionName: string, updateData: any): Promise<Subscription> {
+  async updateSubscription(
+    projectId: string,
+    subscriptionName: string,
+    updateData: any
+  ): Promise<Subscription> {
     const api = getApi()
     const subscriptionPath = `projects/${projectId}/subscriptions/${subscriptionName}`
 
@@ -278,25 +298,30 @@ export const subscriptionsApi = {
     await api.delete(`/v1/projects/${projectId}/subscriptions/${subscriptionName}`)
   },
 
-  async pullMessages(projectId: string, subscriptionName: string, request: PullRequest): Promise<PullResponse> {
+  async pullMessages(
+    projectId: string,
+    subscriptionName: string,
+    request: PullRequest
+  ): Promise<PullResponse> {
     // Use long-running request client for pull operations (5 minute timeout)
     const longRunningApi = createLongRunningRequest(300000) // 5 minutes
-    const response = await longRunningApi.post(`/v1/projects/${projectId}/subscriptions/${subscriptionName}:pull`, request)
+    const response = await longRunningApi.post(
+      `/v1/projects/${projectId}/subscriptions/${subscriptionName}:pull`,
+      request
+    )
     return response.data
   },
 
-  async acknowledgeMessages(projectId: string, subscriptionName: string, ackIds: string[]): Promise<void> {
+  async acknowledgeMessages(
+    projectId: string,
+    subscriptionName: string,
+    ackIds: string[]
+  ): Promise<void> {
     const api = getApi()
     await api.post(`/v1/projects/${projectId}/subscriptions/${subscriptionName}:acknowledge`, {
-      ackIds
+      ackIds,
     })
   },
-
-  async getSubscriptionMetrics(projectId: string, subscriptionName: string): Promise<any> {
-    const api = getApi()
-    const response = await api.get(`/v1/projects/${projectId}/subscriptions/${subscriptionName}/metrics`)
-    return response.data
-  }
 }
 
 // Schemas API
@@ -324,47 +349,22 @@ export const schemasApi = {
     await api.delete(`/v1/projects/${projectId}/schemas/${schemaName}`)
   },
 
-  async validateMessage(projectId: string, schemaName: string, message: any): Promise<{ valid: boolean, errors?: string[] }> {
+  async validateMessage(
+    projectId: string,
+    schemaName: string,
+    message: any
+  ): Promise<{ valid: boolean; errors?: string[] }> {
     const api = getApi()
     const response = await api.post(`/v1/projects/${projectId}/schemas/${schemaName}:validate`, {
-      message
+      message,
     })
     return response.data
-  }
-}
-
-// Monitoring & Metrics API
-export const monitoringApi = {
-  async getDashboardMetrics(projectId: string): Promise<any> {
-    const api = getApi()
-    const response = await api.get(`/v1/projects/${projectId}/metrics/dashboard`)
-    return response.data
   },
-
-  async getTopicMetrics(projectId: string, topicName?: string, timeRange?: string): Promise<any> {
-    const params = new URLSearchParams()
-    if (topicName) params.append('topic', topicName)
-    if (timeRange) params.append('timeRange', timeRange)
-
-    const api = getApi()
-    const response = await api.get(`/v1/projects/${projectId}/metrics/topics?${params}`)
-    return response.data
-  },
-
-  async getSubscriptionMetrics(projectId: string, subscriptionName?: string, timeRange?: string): Promise<any> {
-    const params = new URLSearchParams()
-    if (subscriptionName) params.append('subscription', subscriptionName)
-    if (timeRange) params.append('timeRange', timeRange)
-
-    const api = getApi()
-    const response = await api.get(`/v1/projects/${projectId}/metrics/subscriptions?${params}`)
-    return response.data
-  }
 }
 
 // Health & Status API
 export const healthApi = {
-  async getHealthStatus(): Promise<{ status: string, uptime: number }> {
+  async getHealthStatus(): Promise<{ status: string; uptime: number }> {
     const api = getApi()
     await api.get('/')
     return { status: 'healthy', uptime: Date.now() }
@@ -374,7 +374,7 @@ export const healthApi = {
     const api = getApi()
     const response = await api.get('/v1/system/info')
     return response.data
-  }
+  },
 }
 
 // Configuration API
@@ -388,34 +388,50 @@ export const configApi = {
     const api = getApi()
     const response = await api.get('/v1/config/host')
     return response.data
-  }
+  },
 }
 
 // Bulk operations API
 export const bulkApi = {
-  async bulkCreateTopics(projectId: string, topics: CreateTopicRequest[]): Promise<{ results: Topic[], errors: any[] }> {
+  async bulkCreateTopics(
+    projectId: string,
+    topics: CreateTopicRequest[]
+  ): Promise<{ results: Topic[]; errors: any[] }> {
     const api = getApi()
     const response = await api.post(`/v1/projects/${projectId}/topics:batchCreate`, { topics })
     return response.data
   },
 
-  async bulkDeleteTopics(projectId: string, topicNames: string[]): Promise<{ success: string[], errors: any[] }> {
+  async bulkDeleteTopics(
+    projectId: string,
+    topicNames: string[]
+  ): Promise<{ success: string[]; errors: any[] }> {
     const api = getApi()
     const response = await api.post(`/v1/projects/${projectId}/topics:batchDelete`, { topicNames })
     return response.data
   },
 
-  async bulkCreateSubscriptions(projectId: string, subscriptions: CreateSubscriptionRequest[]): Promise<{ results: Subscription[], errors: any[] }> {
+  async bulkCreateSubscriptions(
+    projectId: string,
+    subscriptions: CreateSubscriptionRequest[]
+  ): Promise<{ results: Subscription[]; errors: any[] }> {
     const api = getApi()
-    const response = await api.post(`/v1/projects/${projectId}/subscriptions:batchCreate`, { subscriptions })
+    const response = await api.post(`/v1/projects/${projectId}/subscriptions:batchCreate`, {
+      subscriptions,
+    })
     return response.data
   },
 
-  async bulkDeleteSubscriptions(projectId: string, subscriptionNames: string[]): Promise<{ success: string[], errors: any[] }> {
+  async bulkDeleteSubscriptions(
+    projectId: string,
+    subscriptionNames: string[]
+  ): Promise<{ success: string[]; errors: any[] }> {
     const api = getApi()
-    const response = await api.post(`/v1/projects/${projectId}/subscriptions:batchDelete`, { subscriptionNames })
+    const response = await api.post(`/v1/projects/${projectId}/subscriptions:batchDelete`, {
+      subscriptionNames,
+    })
     return response.data
-  }
+  },
 }
 
 // Export all API modules
@@ -424,10 +440,9 @@ export const pubsubApi = {
   topics: topicsApi,
   subscriptions: subscriptionsApi,
   schemas: schemasApi,
-  monitoring: monitoringApi,
   health: healthApi,
   config: configApi,
-  bulk: bulkApi
+  bulk: bulkApi,
 }
 
 export default pubsubApi
